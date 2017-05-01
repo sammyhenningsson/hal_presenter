@@ -3,10 +3,19 @@ require 'ostruct'
 
 class SerializerTest < ActiveSupport::TestCase
 
-  class EmbeddedDecorator
+  Child = Struct.new(:title, :data)
+
+  class ParentDecorator
     include HALDecorator
 
     attribute :title
+  end
+
+  class ChildDecorator
+    include HALDecorator
+    model Child
+
+    attribute :data
   end
 
   class Decorator
@@ -16,8 +25,8 @@ class SerializerTest < ActiveSupport::TestCase
     link :self, "/some/uri"
     link :'doc:user', "/some/uri/with/namespace"
     curie :'doc', "/some/templated/uri/{rel}"
-    embed :parent, decorator_class: EmbeddedDecorator
-    embed :children, decorator_class: EmbeddedDecorator
+    embed :parent, decorator_class: ParentDecorator
+    embed :children, decorator_class: ChildDecorator
   end
 
   def setup
@@ -27,15 +36,8 @@ class SerializerTest < ActiveSupport::TestCase
       data: :parent_data
     )
 
-    child1 = OpenStruct.new(
-      title: :child1,
-      data: :child1_data
-    )
-
-    child2 = OpenStruct.new(
-      title: :child2,
-      data: :child2_data
-    )
+    child1 = Child.new(:child1, :child1_data)
+    child2 = Child.new(:child2, :child2_data)
 
     @obj = OpenStruct.new(
       title: "some_title",
@@ -47,40 +49,42 @@ class SerializerTest < ActiveSupport::TestCase
   end
 
   test "serialize" do
-    serialized = Decorator.to_hash(@obj)
+    payload = HALDecorator.to_hal(@obj, decorator: Decorator)
     assert_equal(
-      {
-        title: "some_title",
-        _links: {
-          self: {
-            href: "/some/uri"
-          },
-          'doc:user': {
-            href: "/some/uri/with/namespace"
-          },
-          curies: [
-            {
-              name: :doc,
-              href: "/some/templated/uri/{rel}",
-              templated: true
-            }
-          ],
-        },
-        _embedded: {
-          parent: {
-            title: :some_parent
-          },
-          children: [
-            {
-              title: :child1
+      JSON.generate(
+        {
+          title: "some_title",
+          _links: {
+            self: {
+              href: "/some/uri"
             },
-            {
-              title: :child2
-            }
-          ]
+            'doc:user': {
+              href: "/some/uri/with/namespace"
+            },
+            curies: [
+              {
+                name: :doc,
+                href: "/some/templated/uri/{rel}",
+                templated: true
+              }
+            ],
+          },
+          _embedded: {
+            parent: {
+              title: :some_parent
+            },
+            children: [
+              {
+                data: :child1_data
+              },
+              {
+                data: :child2_data
+              }
+            ]
+          }
         }
-      },
-      serialized
+      ),
+      payload
     )
   end
 end

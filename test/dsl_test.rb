@@ -9,6 +9,18 @@ class DSLTest < ActiveSupport::TestCase
     )
   end
 
+  test "model" do
+    Model = Struct.new(:title)
+
+    class Decorator
+      include HALDecorator
+      model Model
+    end
+
+    resource = Model.new(title: "some title")
+    assert_equal Decorator, HALDecorator.lookup_decorator(resource).first
+  end
+
   test "attributes" do
     class Decorator
       include HALDecorator
@@ -94,7 +106,7 @@ class DSLTest < ActiveSupport::TestCase
     class Decorator
       include HALDecorator
 
-      embed :from_constant, OpenStruct.new(title: "from_constant").freeze, decorator_class: Struct.new("EmbeddedDecorator")
+      embed :from_constant, OpenStruct.new(title: "from_constant").freeze, decorator_class: EmbeddedDecorator
       embed :from_object, decorator_class: EmbeddedDecorator
       embed :from_block, decorator_class: EmbeddedDecorator do |object|
         object.from_block

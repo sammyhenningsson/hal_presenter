@@ -1,7 +1,12 @@
+require 'json'
+
 module HALDecorator
+
   module Serializer
 
-    def to_hash(object, embed = true)
+    class SerializerError < StandardError; end
+
+    def to_hash(object, embed: true)
       serialized = {}
       serialized.merge! serialize_attributes(object)
       serialized.merge! serialize_links(object)
@@ -40,11 +45,16 @@ module HALDecorator
     def serialize_embedded(object)
       serialized = embedded.each_with_object({}) do |embed, hash|
         resource = embed.value(object)
+        decorator = embed.decorator_class
         hash[embed.name] = 
           if resource.respond_to? :each
-            resource.map { |resrc| embed.decorator_class.to_hash(resrc) }
+            decorator ||= HALDecorator.lookup_decorator(resource.first).first
+            resource.map do |resrc|
+              decorator.to_hash(resrc, embed: false)
+            end
           else
-            embed.decorator_class.to_hash(resource)
+            decorator ||= HALDecorator.lookup_decorator(resource).first
+            decorator.to_hash(resource, embed: false)
           end
       end
       return {} unless serialized.any?
