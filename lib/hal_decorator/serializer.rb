@@ -24,7 +24,9 @@ module HALDecorator
 
     def serialize_links(object)
       serialized = links.each_with_object({}) do |link, hash|
-        hash[link.name] = { href: link.value(object) }
+        serialized = { href: link.value(object) }
+        serialized[:method] = link.http_method if link.http_method
+        hash[link.name] = serialized
       end
       curies = serialize_curies(object)
       serialized[:curies] = curies if curies.any?

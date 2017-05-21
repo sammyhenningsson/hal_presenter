@@ -59,11 +59,14 @@ class DSLTest < ActiveSupport::TestCase
       link :from_block do |object|
         object.from_block
       end
+      link :with_method, method: :put do
+        "resource/1/edit"
+      end
     end
 
     links = Decorator.links
     assert links
-    assert_equal 2, links.size
+    assert_equal 3, links.size
 
     link = links.shift
     assert_equal :from_constant, link.name
@@ -73,7 +76,12 @@ class DSLTest < ActiveSupport::TestCase
     assert_equal :from_block, link.name
     assert_equal "string_from_block" , link.value(@obj)
 
-    assert_equal 2, Decorator.links.size
+    link = links.shift
+    assert_equal :with_method, link.name
+    assert_equal "resource/1/edit" , link.value(@obj)
+    assert_equal :put, link.http_method
+
+    assert_equal 3, Decorator.links.size
   end
 
   test "curies" do

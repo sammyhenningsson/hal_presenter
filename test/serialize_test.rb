@@ -23,6 +23,9 @@ class SerializerTest < ActiveSupport::TestCase
 
     attribute :title
     link :self, "/some/uri"
+    link :edit, method: :put do
+      "/some/uri/edit"
+    end
     link :'doc:user', "/some/uri/with/namespace"
     curie :'doc', "/some/templated/uri/{rel}"
     embed :parent, decorator_class: ParentDecorator
@@ -57,6 +60,10 @@ class SerializerTest < ActiveSupport::TestCase
           _links: {
             self: {
               href: "/some/uri"
+            },
+            edit: {
+              href: "/some/uri/edit",
+              method: 'put',
             },
             'doc:user': {
               href: "/some/uri/with/namespace"
