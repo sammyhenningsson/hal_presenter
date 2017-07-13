@@ -1,10 +1,10 @@
-require 'hal_decorator/field'
+require 'hal_decorator/property'
 
 module HALDecorator
   module Curies
     def curie(rel, value = nil, &block)
       @_curies ||= []
-      @_curies << Field.new(rel, value, &block)
+      @_curies << Property.new(rel, value, &block)
     end
 
     def curies

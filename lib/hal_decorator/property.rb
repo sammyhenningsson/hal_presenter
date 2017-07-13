@@ -1,5 +1,5 @@
 module HALDecorator
-  class Field
+  class Property
     attr_reader :name, :options
 
     def initialize(name, value = nil, &block)
@@ -8,14 +8,14 @@ module HALDecorator
       @decorator_instance = nil
       return unless block_given?
       @decorator_instance = eval "self", block.binding
-      define_singleton_method(:value_for) do |*args|
+      define_singleton_method(:value_from) do |*args|
         block.call(*args)
       end
     end
 
     def value(object)
       if @decorator_instance
-        value_for object
+        value_from object
       elsif object && @value.nil?
         object.public_send(name) if object.respond_to?(name)
       else

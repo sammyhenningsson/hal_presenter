@@ -1,8 +1,8 @@
-require 'hal_decorator/field'
+require 'hal_decorator/property'
 
 module HALDecorator
   module Embedded
-    class Embed < HALDecorator::Field
+    class Embed < HALDecorator::Property
       attr_reader :decorator_class
 
       def initialize(name, value = nil, decorator_class: nil, &block)

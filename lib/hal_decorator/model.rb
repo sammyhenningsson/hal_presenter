@@ -15,7 +15,8 @@ module HALDecorator
 
   def HALDecorator.lookup_decorator(model)
     clazz = model.class == Class ? model : model.class
-    @decorators.select { |d, m| m == clazz }.keys
+    decorators = @decorators.select { |d, m| m == clazz }.keys.compact
+    decorators.empty? ? nil : decorators
   end
 
   module Model

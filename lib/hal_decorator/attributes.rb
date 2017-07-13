@@ -1,10 +1,10 @@
-require 'hal_decorator/field'
+require 'hal_decorator/property'
 
 module HALDecorator
   module Attributes
     def attribute(*args, &block)
       @_attributes ||= []
-      @_attributes << Field.new(*args, &block)
+      @_attributes << Property.new(*args, &block)
     end
 
     def attributes
