@@ -6,6 +6,11 @@ module HALDecorator
 
     class SerializerError < StandardError; end
 
+    def to_hal(resource)
+      hash = to_hash(resource)
+      JSON.generate(hash)
+    end
+
     def to_hash(object, embed: true)
       serialized = {}
       serialized.merge! serialize_attributes(object)

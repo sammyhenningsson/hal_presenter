@@ -49,49 +49,53 @@ class SerializerTest < ActiveSupport::TestCase
       children: [child1, child2]
     )
 
-  end
-
-  test "serialize" do
-    payload = HALDecorator.to_hal(@obj, decorator: Decorator)
-    assert_equal(
-      JSON.generate(
-        {
-          title: "some_title",
-          _links: {
-            self: {
-              href: "/some/uri"
-            },
-            edit: {
-              href: "/some/uri/edit",
-              method: 'put',
-            },
-            'doc:user': {
-              href: "/some/uri/with/namespace"
-            },
-            curies: [
-              {
-                name: :doc,
-                href: "/some/templated/uri/{rel}",
-                templated: true
-              }
-            ],
+    @expected = JSON.generate(
+      {
+        title: "some_title",
+        _links: {
+          self: {
+            href: "/some/uri"
           },
-          _embedded: {
-            parent: {
-              title: :some_parent
+          edit: {
+            href: "/some/uri/edit",
+            method: 'put',
+          },
+          'doc:user': {
+            href: "/some/uri/with/namespace"
+          },
+          curies: [
+            {
+              name: :doc,
+              href: "/some/templated/uri/{rel}",
+              templated: true
+            }
+          ],
+        },
+        _embedded: {
+          parent: {
+            title: :some_parent
+          },
+          children: [
+            {
+              data: :child1_data
             },
-            children: [
-              {
-                data: :child1_data
-              },
-              {
-                data: :child2_data
-              }
-            ]
-          }
+            {
+              data: :child2_data
+            }
+          ]
         }
-      ),
-      payload
+      }
     )
   end
+
+  test "HALDecorator.to_hal" do
+    payload = HALDecorator.to_hal(@obj, decorator: Decorator)
+    assert_equal(@expected, payload)
+  end
+
+  test "Decorator.to_hal" do
+    payload = Decorator.to_hal(@obj)
+    assert_equal(@expected, payload)
+  end
+
 end

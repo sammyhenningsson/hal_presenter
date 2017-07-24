@@ -28,8 +28,7 @@ module HALDecorator
   def HALDecorator.to_hal(resource, decorator: nil)
     decorator ||= HALDecorator.lookup_decorator(resource).first
     raise Serializer::SerializerError, "No decorator for #{resource}" unless decorator
-    hash = decorator.to_hash(resource)
-    JSON.generate(hash)
+    decorator.to_hal(resource)
   end
 
   def HALDecorator.to_hal_collection(resources, decorator: nil, uri: nil)
@@ -40,8 +39,7 @@ module HALDecorator
   end
 
   def HALDecorator.from_hal(decorator, payload)
-    hash = JSON.parse(payload)
-    decorator.from_hash(hash)
+    decorator.from_hal(payload)
   end
 
 end

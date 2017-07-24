@@ -49,7 +49,7 @@ class DeserializerTest < ActiveSupport::TestCase
     })
   end
 
-  test "deserialize" do
+  test "HALDecorator.from_hal" do
     resource = HALDecorator.from_hal(Decorator, @json)
     assert resource
     assert_equal Model, resource.class
@@ -61,6 +61,13 @@ class DeserializerTest < ActiveSupport::TestCase
     assert_equal 2, resource.children.size
     assert_equal "child1", resource.children[0].title
     assert_equal "child2", resource.children[1].title
+  end
+
+  test "Decorator.from_hal" do
+    resource = Decorator.from_hal(@json)
+    assert resource
+    assert_equal Model, resource.class
+    assert_equal "very good", resource.comment
   end
 end
 

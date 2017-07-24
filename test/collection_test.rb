@@ -26,7 +26,7 @@ class CollectionTest < ActiveSupport::TestCase
     end
   end
 
-  test "serialize" do
+  test "HALDecorator.to_hal_collection" do
     payload = HALDecorator.to_hal_collection(@resources)
     assert_equal(
       JSON.generate(

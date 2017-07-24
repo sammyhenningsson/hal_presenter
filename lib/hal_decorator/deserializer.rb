@@ -6,6 +6,11 @@ module HALDecorator
 
     class DeserializerError < StandardError; end
 
+    def from_hal(payload)
+      hash = JSON.parse(payload)
+      from_hash(hash)
+    end
+
     def from_hash(hash)
       model = HALDecorator.lookup_model self
       raise DeserializerError, "No model for #{self.class}" unless model
