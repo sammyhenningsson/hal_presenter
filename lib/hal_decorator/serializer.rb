@@ -14,6 +14,17 @@ module HALDecorator
       serialized
     end
 
+    def to_collection(resources, uri: nil)
+      properties = collection_properties
+      serialized_resources = resources.map do |resource|
+        to_hash(resource, embed: false)
+      end
+      if properties&.type
+        serialized_resources = {properties.type => serialized_resources}
+      end
+      {_embedded: serialized_resources}
+    end
+
     protected
 
     def serialize_attributes(object)
