@@ -11,7 +11,7 @@ class CollectionTest < ActiveSupport::TestCase
 
     attribute :title
     attribute :data
-    link :self do |object|
+    link :self do
       "/resources/#{object.id}"
     end
 
@@ -64,7 +64,7 @@ class CollectionTest < ActiveSupport::TestCase
   end
 
   test 'HALDecorator.to_hal_collection with opts' do
-    attributes = {collection_attribute: 'some_attribute'}
+    attributes = { collection_attribute: 'some_attribute' }
     links = {
       self: { href: '/resources?page=1' },
       next: { href: '/resources?page=2' }
