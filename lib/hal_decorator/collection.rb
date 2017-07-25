@@ -3,27 +3,11 @@ require 'hal_decorator/property'
 module HALDecorator
   module Collection
 
-    class CollectionProperties
-      attr_reader :type
-      def name(name)
-        @type = name.to_sym
-      end
+    attr_reader :collection_name
 
-      def call(&block)
-        instance_eval(&block) if block_given?
-      end
+    def as_collection_of(name)
+      @collection_name = name.freeze
     end
 
-    def collection(&block)
-      return unless block_given?
-      data = CollectionProperties.new
-      data.call(&block)
-      @_collection_properties = data
-    end
-
-    def collection_properties
-      @_collection_properties.dup
-    end
   end
 end
-

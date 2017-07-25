@@ -25,20 +25,20 @@ module HALDecorator
     include HALDecorator::Deserializer
   end
 
-  def HALDecorator.to_hal(resource, decorator: nil)
+  def self.to_hal(resource, decorator: nil)
     decorator ||= HALDecorator.lookup_decorator(resource).first
     raise Serializer::SerializerError, "No decorator for #{resource}" unless decorator
     decorator.to_hal(resource)
   end
 
-  def HALDecorator.to_hal_collection(resources, decorator: nil, uri: nil)
+  def self.to_hal_collection(resources, decorator: nil, attributes: {}, links: {})
     decorator ||= HALDecorator.lookup_decorator(resources.first).first
     raise Serializer::SerializerError, "No decorator for #{resources.first}" unless decorator
-    hash = decorator.to_collection(resources, uri: uri)
+    hash = decorator.to_collection(resources, attributes: attributes, links: links)
     JSON.generate(hash)
   end
 
-  def HALDecorator.from_hal(decorator, payload)
+  def self.from_hal(decorator, payload)
     decorator.from_hal(payload)
   end
 

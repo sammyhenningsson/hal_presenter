@@ -19,15 +19,20 @@ module HALDecorator
       serialized
     end
 
-    def to_collection(resources, uri: nil)
-      properties = collection_properties
+    def to_collection(resources, attributes: {}, links: {})
+      serialized = {}
+      attributes.each do |key,value|
+        serialized[key] = value
+      end
+
       serialized_resources = resources.map do |resource|
         to_hash(resource, embed: false)
       end
-      if properties&.type
-        serialized_resources = {properties.type => serialized_resources}
+      if collection_name
+        serialized_resources = {collection_name => serialized_resources}
       end
-      {_embedded: serialized_resources}
+      serialized[:_embedded] = serialized_resources
+      serialized
     end
 
     protected
