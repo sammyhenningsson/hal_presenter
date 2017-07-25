@@ -48,10 +48,13 @@ class PropertyTest < ActiveSupport::TestCase
   end
 
   test 'block can access methods from block creation scope' do
-    def decorator_foo
-      'extra'
+    def decorator_foo(arg)
+      x = yield if block_given?
+      "#{arg}_#{x}"
     end
-    property = HALDecorator::Property.new(:name) { decorator_foo }
-    assert_equal('extra', property.value)
+    property = HALDecorator::Property.new(:name) do
+      decorator_foo('something') { 'complex' }
+    end
+    assert_equal('something_complex', property.value)
   end
 end

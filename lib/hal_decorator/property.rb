@@ -27,7 +27,10 @@ module HALDecorator
 
     def method_missing(method, *args, &block)
       if @scope&.respond_to? method
-        return @scope.send method, *args, &block
+        define_singleton_method(method) do |*args, &b|
+          @scope.send method, *args, &b
+        end
+        return send(method, *args, &block)
       end
       super
     end
