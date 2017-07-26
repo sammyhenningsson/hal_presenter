@@ -26,19 +26,15 @@ module HALDecorator
           "Trying to serialize a collection using #{self} which has no collection info. " \
           "Add a 'collection' spec to the serializer or use another serializer"
       end
-      serialized = {}
-      serialized.merge! _serialize_attributes(parameters.attributes, resources, options)
       links = parameters.links
       curies = parameters.curies
+      serialized = _serialize_attributes(parameters.attributes, resources, options)
       serialized.merge! _serialize_links(links, curies, resources, options)
 
       serialized_resources = resources.map do |resource|
         to_hash(resource, embed: false)
       end
-      if parameters.name
-        serialized_resources = {parameters.name => serialized_resources}
-      end
-      serialized[:_embedded] = serialized_resources
+      serialized[:_embedded] = { parameters.name => serialized_resources }
       JSON.generate(serialized)
     end
 

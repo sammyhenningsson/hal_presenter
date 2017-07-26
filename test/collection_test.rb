@@ -3,52 +3,52 @@ require 'ostruct'
 
 class CollectionTest < ActiveSupport::TestCase
 
-  Resource = Struct.new(:id, :title, :data)
+  Item = Struct.new(:id, :title, :data)
 
   class Decorator
     include HALDecorator
-    model Resource
+    model Item
 
     attribute :title
     attribute :data
     link :self do
-      "/resources/#{resource.id}"
+      "/items/#{resource.id}"
     end
 
-    collection of: 'resources' do
+    collection of: 'items' do
       attribute :count
 
       link :self do
-        '/resources?page=1'
+        '/items?page=1'
       end
 
       link :next do
         return unless options.key? :page
-        "/resources?page=#{options[:page]}"
+        "/items?page=#{options[:page]}"
       end
     end
   end
 
   def setup
-    @resources = (1..3).map do |i|
-      Resource.new(i, "title#{i}", "data#{i}")
+    @items = (1..3).map do |i|
+      Item.new(i, "title#{i}", "data#{i}")
     end
 
     @expected = {
       count: 3,
       _links: {
         self: {
-          href: '/resources?page=1'
+          href: '/items?page=1'
         }
       },
       _embedded: {
-        resources: [
+        items: [
           {
             title: 'title1',
             data: 'data1',
             _links: {
               self: {
-                href: '/resources/1'
+                href: '/items/1'
               }
             }
           },
@@ -57,7 +57,7 @@ class CollectionTest < ActiveSupport::TestCase
             data: 'data2',
             _links: {
               self: {
-                href: '/resources/2'
+                href: '/items/2'
               }
             }
           },
@@ -66,7 +66,7 @@ class CollectionTest < ActiveSupport::TestCase
             data: 'data3',
             _links: {
               self: {
-                href: '/resources/3'
+                href: '/items/3'
               }
             }
           }
@@ -76,31 +76,43 @@ class CollectionTest < ActiveSupport::TestCase
   end
 
   test 'Decorator.to_collection' do
-    payload = Decorator.to_collection(@resources)
+    payload = Decorator.to_collection(@items)
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
   test 'HALDecorator.to_collection with opts' do
     options = { page: 2 }
-    payload = HALDecorator.to_collection(@resources, options)
-    @expected[:_links][:next] = { href: '/resources?page=2' }
+    payload = HALDecorator.to_collection(@items, options)
+    @expected[:_links][:next] = { href: '/items?page=2' }
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
   test 'HALDecorator.to_collection raises execption when no collection block' do
-    class BrokenDecorator
+    class DecoratorWithoutCollection
       include HALDecorator
-      model Resource
+      model Item
 
       attribute :title
       attribute :data
       link :self do
-        "/resources/#{resource.id}"
+        "/items/#{resource.id}"
       end
     end
 
     assert_raises(HALDecorator::Serializer::Error) do
-      BrokenDecorator.to_collection(@resources)
+      DecoratorWithoutCollection.to_collection(@items)
+    end
+  end
+
+  test 'HALDecorator.from_hal' do
+    collection = Decorator.from_hal(JSON.generate(@expected))
+    assert_instance_of Array, collection
+    assert_equal 3, collection.size
+    collection.each_with_index do |item, i|
+      i += 1
+      assert_instance_of Item, item
+      assert_equal "title#{i}", item.title
+      assert_equal "data#{i}", item.data
     end
   end
 end

@@ -41,7 +41,7 @@ module HALDecorator
     decorator.to_collection(resources, options)
   end
 
-  def self.from_hal(decorator, payload)
-    decorator.from_hal(payload)
+  def self.from_hal(decorator, payload, resource = nil)
+    decorator.from_hal(payload, resource)
   end
 end

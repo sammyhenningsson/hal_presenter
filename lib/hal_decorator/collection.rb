@@ -18,7 +18,7 @@ module HALDecorator
       end
     end
 
-    def collection(of: nil, &block)
+    def collection(of:, &block)
       @_parameters = CollectionParameters.new(of, &block)
     end
 
