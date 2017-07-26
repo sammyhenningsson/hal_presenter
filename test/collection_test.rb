@@ -99,7 +99,7 @@ class CollectionTest < ActiveSupport::TestCase
       end
     end
 
-    assert_raises(HALDecorator::Serializer::SerializerError) do
+    assert_raises(HALDecorator::Serializer::Error) do
       BrokenDecorator.to_collection(@resources)
     end
   end

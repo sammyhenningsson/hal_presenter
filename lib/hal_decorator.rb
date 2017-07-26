@@ -26,18 +26,18 @@ module HALDecorator
   end
 
   def self.to_hal(resource, options = {})
-    raise Serializer::SerializerError, "Resource is nil" if resource.nil?
+    raise Serializer::Error, "Resource is nil" if resource.nil?
     decorator = options.delete(:decorator)
     decorator ||= HALDecorator.lookup_decorator(resource)&.first
-    raise Serializer::SerializerError, "No decorator for #{resource}" unless decorator
+    raise Serializer::Error, "No decorator for #{resource}" unless decorator
     decorator.to_hal(resource, options)
   end
 
   def self.to_collection(resources, options = {})
-    raise Serializer::SerializerError, "resources is nil" if resources.nil?
+    raise Serializer::Error, "resources is nil" if resources.nil?
     decorator = options.delete(:decorator)
     decorator ||= HALDecorator.lookup_decorator(resources.first)&.first
-    raise Serializer::SerializerError, "No decorator for #{resources.first}" unless decorator
+    raise Serializer::Error, "No decorator for #{resources.first}" unless decorator
     decorator.to_collection(resources, options)
   end
 

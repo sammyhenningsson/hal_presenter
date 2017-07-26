@@ -4,7 +4,7 @@ module HALDecorator
 
   module Serializer
 
-    class SerializerError < StandardError; end
+    class Error < StandardError; end
 
     def to_hal(resource, options = {})
       hash = to_hash(resource, options)
@@ -22,7 +22,7 @@ module HALDecorator
     def to_collection(resources, options = {})
       parameters = collection_parameters
       if parameters.nil?
-        raise SerializerError,
+        raise Error,
           "Trying to serialize a collection using #{self} which has no collection info. " \
           "Add a 'collection' spec to the serializer or use another serializer"
       end

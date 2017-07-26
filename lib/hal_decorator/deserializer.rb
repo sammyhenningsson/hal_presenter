@@ -4,7 +4,7 @@ module HALDecorator
 
   module Deserializer
 
-    class DeserializerError < StandardError; end
+    class Error < StandardError; end
 
     def from_hal(payload, resource = nil)
       hash = JSON.parse(payload)
@@ -16,7 +16,7 @@ module HALDecorator
     def from_hash(hash, resource)
       if resource.nil?
         model = HALDecorator.lookup_model self
-        raise DeserializerError, "No model for #{self.class}" unless model
+        raise Error, "No model for #{self.class}" unless model
         resource = model.new
       end
       deserialize_attributes(resource, hash)
