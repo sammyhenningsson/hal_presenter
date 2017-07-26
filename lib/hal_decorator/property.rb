@@ -1,8 +1,8 @@
 module HALDecorator
   class Property
-    attr_reader :name, :object, :options
+    attr_reader :name, :resource, :options
 
-    alias :objects :object
+    alias :resources :resource
 
     def initialize(name, value = nil, &block)
       @name = name
@@ -13,13 +13,13 @@ module HALDecorator
       define_singleton_method(:value_from_block, &block)
     end
 
-    def value(object = nil, options = {})
-      @object = object
+    def value(resource = nil, options = {})
+      @resource = resource
       @options = options
       if @scope
         value_from_block
-      elsif object && @value.nil?
-        object.public_send(name) if object.respond_to?(name)
+      elsif resource && @value.nil?
+        resource.public_send(name) if resource.respond_to?(name)
       else
         @value
       end
@@ -45,7 +45,7 @@ module HALDecorator
     private
 
     def reset
-      @object = nil
+      @resource = nil
       @options = nil
     end
   end

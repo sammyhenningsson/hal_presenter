@@ -12,7 +12,7 @@ class CollectionTest < ActiveSupport::TestCase
     attribute :title
     attribute :data
     link :self do
-      "/resources/#{object.id}"
+      "/resources/#{resource.id}"
     end
 
     as_collection of: 'resources' do

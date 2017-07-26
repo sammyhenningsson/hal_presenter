@@ -13,7 +13,7 @@ class PropertyTest < ActiveSupport::TestCase
     assert_equal('bicycle', property.value(@item))
   end
 
-  test 'that value is returned from object' do
+  test 'that value is returned from item' do
     property = HALDecorator::Property.new(:name)
     assert_equal('car', property.value(@item))
   end
@@ -23,8 +23,8 @@ class PropertyTest < ActiveSupport::TestCase
     assert_equal('bus', property.value(@item))
   end
 
-  test 'that object is accessible in block' do
-    property = HALDecorator::Property.new(:name) { object.color }
+  test 'that resource is accessible in block' do
+    property = HALDecorator::Property.new(:name) { resource.color }
     assert_equal('green', property.value(@item))
   end
 
@@ -34,13 +34,13 @@ class PropertyTest < ActiveSupport::TestCase
     assert_equal('blue', property.value(@item, opts))
   end
 
-  test 'that object/options are not reused' do
+  test 'that resource/options are not reused' do
     opts1 = { default_value: 'blue' }
     opts2 = { default_value: 'black' }
     item2 = Struct::Item.new('bus', 'white')
 
     property = HALDecorator::Property.new(:name) do
-      [object.name, options[:default_value]]
+      [resource.name, options[:default_value]]
     end
 
     assert_equal(%w[car blue], property.value(@item, opts1))

@@ -28,7 +28,7 @@ class DSLTest < ActiveSupport::TestCase
       attribute :from_constant, 'some_string'.freeze
       attribute :from_object
       attribute :from_block do
-        object.from_block
+        resource.from_block
       end
     end
 
@@ -57,7 +57,7 @@ class DSLTest < ActiveSupport::TestCase
 
       link :from_constant, 'some_string'.freeze
       link :from_block do
-        object.from_block
+        resource.from_block
       end
       link :with_method, method: :put do
         'resource/1/edit'
@@ -90,7 +90,7 @@ class DSLTest < ActiveSupport::TestCase
 
       curie :from_constant, 'some_string'.freeze
       curie :from_block do
-        object.from_block
+        resource.from_block
       end
     end
 
@@ -117,7 +117,7 @@ class DSLTest < ActiveSupport::TestCase
       embed :from_constant, OpenStruct.new(title: 'from_constant').freeze, decorator_class: EmbeddedDecorator
       embed :from_object, decorator_class: EmbeddedDecorator
       embed :from_block, decorator_class: EmbeddedDecorator do
-        object.from_block
+        resource.from_block
       end
     end
 
