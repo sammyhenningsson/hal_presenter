@@ -19,11 +19,11 @@ module HALDecorator
     end
 
     def collection(of: nil, &block)
-      @parameters = CollectionParameters.new(of, &block)
+      @_parameters = CollectionParameters.new(of, &block)
     end
 
     def collection_parameters
-      @parameters
+      @_parameters ||= nil
     end
   end
 end

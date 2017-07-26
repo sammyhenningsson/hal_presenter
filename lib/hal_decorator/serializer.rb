@@ -19,7 +19,7 @@ module HALDecorator
       end
     end
 
-    def to_collection(resources, options)
+    def to_collection(resources, options = {})
       parameters = collection_parameters
       if parameters.nil?
         raise SerializerError,
@@ -71,8 +71,8 @@ module HALDecorator
     def _serialize_links(links, curies, object, options)
       serialized = links.each_with_object({}) do |link, hash|
         value = link.value(object, options) or next
-        hash[link.name] = { href: value }.tap do |serialized|
-          serialized[:method] = link.http_method if link.http_method
+        hash[link.name] = { href: value }.tap do |s|
+          s[:method] = link.http_method if link.http_method
         end
       end
       curies = _serialize_curies(curies, object, options)

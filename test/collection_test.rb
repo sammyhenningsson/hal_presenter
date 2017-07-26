@@ -75,8 +75,8 @@ class CollectionTest < ActiveSupport::TestCase
     }
   end
 
-  test 'HALDecorator.to_collection' do
-    payload = HALDecorator.to_collection(@resources)
+  test 'Decorator.to_collection' do
+    payload = Decorator.to_collection(@resources)
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
@@ -85,5 +85,22 @@ class CollectionTest < ActiveSupport::TestCase
     payload = HALDecorator.to_collection(@resources, options)
     @expected[:_links][:next] = { href: '/resources?page=2' }
     assert_sameish_hash(@expected, JSON.parse(payload))
+  end
+
+  test 'HALDecorator.to_collection raises execption when no collection block' do
+    class BrokenDecorator
+      include HALDecorator
+      model Resource
+
+      attribute :title
+      attribute :data
+      link :self do
+        "/resources/#{resource.id}"
+      end
+    end
+
+    assert_raises(HALDecorator::Serializer::SerializerError) do
+      BrokenDecorator.to_collection(@resources)
+    end
   end
 end
