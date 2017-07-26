@@ -66,7 +66,23 @@ class DeserializerTest < ActiveSupport::TestCase
   test 'Decorator.from_hal' do
     resource = Decorator.from_hal(@json)
     assert resource
-    assert_equal Model, resource.class
+    assert_instance_of Model, resource
     assert_equal 'very good', resource.comment
+  end
+
+  test 'Deserialize into existing resource' do
+    resource = Model.new(
+      'title',
+      'to_be_changed',
+      nil,
+      OpenStruct.new(title: 'to_be_changed')
+    )
+    Decorator.from_hal(@json, resource)
+    assert resource
+    assert_instance_of Model, resource
+    assert_equal 'very good', resource.comment
+    parent = resource.parent
+    assert_instance_of OpenStruct, parent
+    assert_equal 'some_parent', parent.title
   end
 end
