@@ -12,11 +12,11 @@ module HALDecorator
     end
 
     def to_hash(object, options, embed: true)
-      serialized = {}
-      serialized.merge! serialize_attributes(object, options)
-      serialized.merge! serialize_links(object, options)
-      serialized.merge! serialize_embedded(object, options) if embed
-      serialized
+      {}.tap do |serialized|
+        serialized.merge! serialize_attributes(object, options)
+        serialized.merge! serialize_links(object, options)
+        serialized.merge! serialize_embedded(object, options) if embed
+      end
     end
 
     def to_collection(resources, options)
@@ -71,22 +71,22 @@ module HALDecorator
     def _serialize_links(links, curies, object, options)
       serialized = links.each_with_object({}) do |link, hash|
         value = link.value(object, options) or next
-        serialized = { href: value }
-        serialized[:method] = link.http_method if link.http_method
-        hash[link.name] = serialized
+        hash[link.name] = { href: value }.tap do |serialized|
+          serialized[:method] = link.http_method if link.http_method
+        end
       end
       curies = _serialize_curies(curies, object, options)
       serialized[:curies] = curies if curies.any?
-      return {} unless serialized.any?
+      return {} if serialized.empty?
       { _links: serialized }
     end
 
     def _serialize_curies(curies, object, options)
       curies.each_with_object([]) do |curie, array|
         array << {
-          name: curie.name, 
+          name: curie.name,
           href: curie.value(object, options),
-          "templated": true
+          templated: true
         }
       end
     end
@@ -106,7 +106,7 @@ module HALDecorator
             decorator.to_hash(resource, options, embed: false)
           end
       end
-      return {} unless serialized.any?
+      return {} if serialized.empty?
       { _embedded: serialized }
     end
   end
