@@ -32,12 +32,11 @@ module HALDecorator
     decorator.to_hal(resource)
   end
 
-  def self.to_hal_collection(resources, options = {})
+  def self.to_collection(resources, options = {})
     decorator = options.delete(:decorator)
     decorator ||= HALDecorator.lookup_decorator(resources.first).first
     raise Serializer::SerializerError, "No decorator for #{resources.first}" unless decorator
-    hash = decorator.to_collection(resources, options)
-    JSON.generate(hash)
+    decorator.to_collection(resources, options)
   end
 
   def self.from_hal(decorator, payload)

@@ -5,9 +5,25 @@ module HALDecorator
 
     attr_reader :collection_name
 
-    def as_collection_of(name)
-      @collection_name = name.freeze
+    class CollectionParameters
+      include Attributes
+      include Links
+      include Curies
+
+      attr_reader :name
+
+      def initialize(name, &block)
+        @name = name
+        instance_exec(&block)
+      end
     end
 
+    def as_collection(of: nil, &block)
+      @parameters = CollectionParameters.new(of, &block)
+    end
+
+    def collection_parameters
+      @parameters
+    end
   end
 end

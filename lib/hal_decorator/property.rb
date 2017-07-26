@@ -2,6 +2,8 @@ module HALDecorator
   class Property
     attr_reader :name, :object, :options
 
+    alias :objects :object
+
     def initialize(name, value = nil, &block)
       @name = name
       @value = value

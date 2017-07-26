@@ -20,45 +20,68 @@ module HALDecorator
     end
 
     def to_collection(resources, options)
-      attributes = options.delete(:attributes) { Hash.new }
-      links      = options.delete(:links) { Hash.new }
-
-      serialized = {}
-      attributes.each do |key,value|
-        serialized[key] = value
+      parameters = collection_parameters
+      if parameters.nil?
+        raise SerializerError,
+          "Trying to serialize a collection using #{self} which has no collection info. " \
+          "Add an 'as_collection' spec to serializer or use another serializer"
       end
+      serialized = {}
+      serialized.merge! _serialize_attributes(parameters.attributes, resources, options)
+      links = parameters.links
+      curies = parameters.curies
+      serialized.merge! _serialize_links(links, curies, resources, options)
 
       serialized_resources = resources.map do |resource|
         to_hash(resource, embed: false)
       end
-      if collection_name
-        serialized_resources = {collection_name => serialized_resources}
+      if parameters.name
+        serialized_resources = {parameters.name => serialized_resources}
       end
       serialized[:_embedded] = serialized_resources
-      serialized
+      JSON.generate(serialized)
     end
 
     protected
 
     def serialize_attributes(object, options)
+      _serialize_attributes(attributes, object, options)
+    end
+
+    def serialize_links(object, options)
+      _serialize_links(links, curies, object, options)
+    end
+
+    def serialize_curies(object, options)
+      _serialize_curies(curies, object, options)
+    end
+
+    def serialize_embedded(object, options)
+      _serialize_embedded(embedded, object, options)
+    end
+
+    private
+
+    def _serialize_attributes(attributes, object, options)
       attributes.each_with_object({}) do |attribute, hash|
         hash[attribute.name] = attribute.value(object, options)
       end
     end
 
-    def serialize_links(object, options)
+    def _serialize_links(links, curies, object, options)
       serialized = links.each_with_object({}) do |link, hash|
-        serialized = { href: link.value(object, options) }
+        value = link.value(object, options) or next
+        serialized = { href: value }
         serialized[:method] = link.http_method if link.http_method
         hash[link.name] = serialized
       end
-      curies = serialize_curies(object, options)
+      curies = _serialize_curies(curies, object, options)
       serialized[:curies] = curies if curies.any?
       return {} unless serialized.any?
       { _links: serialized }
     end
 
-    def serialize_curies(object, options)
+    def _serialize_curies(curies, object, options)
       curies.each_with_object([]) do |curie, array|
         array << {
           name: curie.name, 
@@ -68,9 +91,9 @@ module HALDecorator
       end
     end
 
-    def serialize_embedded(object, options)
+    def _serialize_embedded(embedded, object, options)
       serialized = embedded.each_with_object({}) do |embed, hash|
-        resource = embed.value(object, options)
+        resource = embed.value(object, options) or next
         decorator = embed.decorator_class
         hash[embed.name] = 
           if resource.respond_to? :each
@@ -86,7 +109,6 @@ module HALDecorator
       return {} unless serialized.any?
       { _embedded: serialized }
     end
-
   end
 end
 

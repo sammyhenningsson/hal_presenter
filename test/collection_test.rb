@@ -15,7 +15,18 @@ class CollectionTest < ActiveSupport::TestCase
       "/resources/#{object.id}"
     end
 
-    as_collection_of 'resources'
+    as_collection of: 'resources' do
+      attribute :count
+
+      link :self do
+        '/resources?page=1'
+      end
+
+      link :next do
+        return unless options.key? :page
+        "/resources?page=#{options[:page]}"
+      end
+    end
   end
 
   def setup
@@ -24,6 +35,12 @@ class CollectionTest < ActiveSupport::TestCase
     end
 
     @expected = {
+      count: 3,
+      _links: {
+        self: {
+          href: '/resources?page=1'
+        }
+      },
       _embedded: {
         resources: [
           {
@@ -58,23 +75,15 @@ class CollectionTest < ActiveSupport::TestCase
     }
   end
 
-  test 'HALDecorator.to_hal_collection' do
-    payload = HALDecorator.to_hal_collection(@resources)
-    assert_equal(JSON.generate(@expected), payload)
+  test 'HALDecorator.to_collection' do
+    payload = HALDecorator.to_collection(@resources)
+    assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
-  test 'HALDecorator.to_hal_collection with opts' do
-    attributes = { collection_attribute: 'some_attribute' }
-    links = {
-      self: { href: '/resources?page=1' },
-      next: { href: '/resources?page=2' }
-    }
-    payload = HALDecorator.to_hal_collection(@resources, attributes: attributes, links: links)
-    @expected[:collection_attribute] = 'some_attribute'
-    @expected[:links] = {
-      self: { href: '/resources?page=1' },
-      next: { href: '/resources?page=2' }
-    }
-    assert_equal(@expected, JSON.parse(payload))
+  test 'HALDecorator.to_collection with opts' do
+    options = { page: 2 }
+    payload = HALDecorator.to_collection(@resources, options)
+    @expected[:_links][:next] = { href: '/resources?page=2' }
+    assert_sameish_hash(@expected, JSON.parse(payload))
   end
 end
