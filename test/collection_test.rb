@@ -15,7 +15,7 @@ class CollectionTest < ActiveSupport::TestCase
       "/resources/#{resource.id}"
     end
 
-    as_collection of: 'resources' do
+    collection of: 'resources' do
       attribute :count
 
       link :self do

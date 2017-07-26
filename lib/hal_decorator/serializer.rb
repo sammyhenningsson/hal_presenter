@@ -24,7 +24,7 @@ module HALDecorator
       if parameters.nil?
         raise SerializerError,
           "Trying to serialize a collection using #{self} which has no collection info. " \
-          "Add an 'as_collection' spec to serializer or use another serializer"
+          "Add a 'collection' spec to the serializer or use another serializer"
       end
       serialized = {}
       serialized.merge! _serialize_attributes(parameters.attributes, resources, options)
