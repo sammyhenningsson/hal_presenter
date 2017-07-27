@@ -14,7 +14,7 @@ module HALDecorator
 
       def initialize(name, &block)
         @name = name
-        instance_exec(&block)
+        instance_exec(&block) if block_given?
       end
     end
 

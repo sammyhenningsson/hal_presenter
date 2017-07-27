@@ -87,7 +87,7 @@ class CollectionTest < ActiveSupport::TestCase
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
-  test 'HALDecorator.to_collection raises execption when no collection block' do
+  test 'to_collection raises execption when no collection_parameters' do
     class DecoratorWithoutCollection
       include HALDecorator
       model Item
@@ -114,5 +114,24 @@ class CollectionTest < ActiveSupport::TestCase
       assert_equal "title#{i}", item.title
       assert_equal "data#{i}", item.data
     end
+  end
+
+  test 'collection can be called without a block' do
+    class DecoratorWithoutCollectionBlock
+      include HALDecorator
+      model Item
+
+      attribute :title
+      attribute :data
+      link :self do
+        "/items/#{resource.id}"
+      end
+
+      collection of: 'items'
+    end
+    payload = DecoratorWithoutCollectionBlock.to_collection(@items)
+    @expected.delete(:count)
+    @expected.delete(:_links)
+    assert_sameish_hash(@expected, JSON.parse(payload))
   end
 end
