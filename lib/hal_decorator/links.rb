@@ -6,6 +6,9 @@ module HALDecorator
     class Link < HALDecorator::Property
       attr_reader :http_method
       def initialize(rel, value = nil, http_method: nil, &block)
+        if value.nil? && !block_given?
+          raise 'link must be called with non nil value or be given a block'
+        end
         @http_method = http_method
         super(rel, value, &block)
       end
