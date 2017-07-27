@@ -7,6 +7,7 @@ module HALDecorator
     class Error < StandardError; end
 
     def from_hal(payload, resource = nil)
+      return if payload.nil? || payload.empty?
       hash = JSON.parse(payload)
       from_hash(hash, resource)
     end

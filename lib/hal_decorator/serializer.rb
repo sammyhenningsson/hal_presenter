@@ -11,7 +11,7 @@ module HALDecorator
       JSON.generate(hash)
     end
 
-    def to_collection(resources, options = {})
+    def to_collection(resources = [], options = {})
       parameters = collection_parameters
       if parameters.nil?
         raise Error,

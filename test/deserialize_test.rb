@@ -85,4 +85,9 @@ class DeserializerTest < ActiveSupport::TestCase
     assert_instance_of OpenStruct, parent
     assert_equal 'some_parent', parent.title
   end
+
+  test 'empty payload returns nil' do
+    assert_nil Decorator.from_hal(nil)
+    assert_nil Decorator.from_hal("")
+  end
 end
