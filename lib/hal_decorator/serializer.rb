@@ -23,20 +23,18 @@ module HALDecorator
       serialized = _serialize_attributes(parameters.attributes, resources, options)
       serialized.merge! _serialize_links(links, curies, resources, options)
 
-      serialized_resources = resources.map do |resource|
-        to_hash(resource, embed: false)
-      end
+      serialized_resources = resources.map { |resource| to_hash(resource, options) }
       serialized[:_embedded] = { parameters.name => serialized_resources }
       JSON.generate(serialized)
     end
 
     protected
 
-    def to_hash(object, options, embed: true)
+    def to_hash(object, options)
       {}.tap do |serialized|
         serialized.merge! serialize_attributes(object, options)
         serialized.merge! serialize_links(object, options)
-        serialized.merge! serialize_embedded(object, options) if embed
+        serialized.merge! serialize_embedded(object, options)
       end
     end
 
@@ -95,11 +93,11 @@ module HALDecorator
           if resource.respond_to? :each
             decorator ||= HALDecorator.lookup_decorator(resource.first).first
             resource.map do |resrc|
-              decorator.to_hash(resrc, options, embed: false)
+              decorator.to_hash(resrc, options)
             end
           else
             decorator ||= HALDecorator.lookup_decorator(resource).first
-            decorator.to_hash(resource, options, embed: false)
+            decorator.to_hash(resource, options)
           end
       end
       return {} if serialized.empty?

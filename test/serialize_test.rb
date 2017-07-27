@@ -130,4 +130,66 @@ class SerializerTest < ActiveSupport::TestCase
     end
   end
 
+  test 'multiple nested embeds' do
+    class C
+      include HALDecorator
+      link :self, '/grandchild'
+      attribute :data { resource.data }
+    end
+    class B
+      include HALDecorator
+      link :self, '/child'
+      attribute :data { resource.data }
+      embed :child, decorator_class: C
+    end
+    class A
+      include HALDecorator
+      link :self, '/'
+      attribute :data { resource.data }
+      embed :child, decorator_class: B
+    end
+
+    obj = OpenStruct.new(
+      data: 'parent',
+      child: OpenStruct.new(
+        data: 'child',
+        child: OpenStruct.new(
+          data: 'grandchild'
+        )
+      )
+    )
+
+    expected = {
+      data: 'parent',
+      _links: {
+        self: {
+          href: '/'
+        }
+      },
+      _embedded: {
+        child: {
+          data: 'child',
+          _links: {
+            self: {
+              href: '/child'
+            }
+          },
+          _embedded: {
+            child: {
+              data: 'grandchild',
+              _links: {
+                self: {
+                  href: '/grandchild'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    payload = A.to_hal(obj)
+    assert_sameish_hash(expected, JSON.parse(payload))
+  end
+
 end
