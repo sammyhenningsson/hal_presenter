@@ -6,7 +6,7 @@ module HALDecorator
 
     class Error < StandardError; end
 
-    def to_hal(resource, options = {})
+    def to_hal(resource = nil, options = {})
       hash = to_hash(resource, options)
       JSON.generate(hash)
     end
