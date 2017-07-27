@@ -11,14 +11,6 @@ module HALDecorator
       JSON.generate(hash)
     end
 
-    def to_hash(object, options, embed: true)
-      {}.tap do |serialized|
-        serialized.merge! serialize_attributes(object, options)
-        serialized.merge! serialize_links(object, options)
-        serialized.merge! serialize_embedded(object, options) if embed
-      end
-    end
-
     def to_collection(resources, options = {})
       parameters = collection_parameters
       if parameters.nil?
@@ -39,6 +31,14 @@ module HALDecorator
     end
 
     protected
+
+    def to_hash(object, options, embed: true)
+      {}.tap do |serialized|
+        serialized.merge! serialize_attributes(object, options)
+        serialized.merge! serialize_links(object, options)
+        serialized.merge! serialize_embedded(object, options) if embed
+      end
+    end
 
     def serialize_attributes(object, options)
       _serialize_attributes(attributes, object, options)

@@ -22,6 +22,8 @@ module HALDecorator
       @_parameters = CollectionParameters.new(of, &block)
     end
 
+    protected
+
     def collection_parameters
       @_parameters ||= nil
     end

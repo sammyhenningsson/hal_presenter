@@ -37,7 +37,7 @@ module HALDecorator
       attributes.each do |attribute|
         setter_method = setter_method_name(attribute.name)
         next unless resource.respond_to? setter_method
-        resource.send(setter_method, hash[attribute.name.to_s])
+        resource.public_send(setter_method, hash[attribute.name.to_s])
       end
     end
 
@@ -50,14 +50,14 @@ module HALDecorator
         embedded_hash = hash.dig('_embedded', embed.name.to_s)
         next unless embedded_hash&.any?
 
-        embedded_resource = resource.send(embed.name)
+        embedded_resource = resource.public_send(embed.name)
         embedded_resource = 
           if embedded_hash.is_a? Array
             embedded_hash.map { |h| decorator.from_hash(h, embedded_resource) }
           else
             decorator.from_hash(embedded_hash, embedded_resource)
           end
-        resource.send(setter_method, embedded_resource)
+        resource.public_send(setter_method, embedded_resource)
       end
     end
 

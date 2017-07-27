@@ -19,6 +19,8 @@ module HALDecorator
       @_links << Link.new(rel, value, http_method: method || methods, &block)
     end
 
+    protected
+
     def links
       @_links ||= []
       @_links.dup

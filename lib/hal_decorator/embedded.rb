@@ -16,6 +16,8 @@ module HALDecorator
       @_embedded << Embed.new(*args, &block)
     end
 
+    protected
+
     def embedded
       @_embedded ||= []
       @_embedded.dup

@@ -7,6 +7,8 @@ module HALDecorator
       @_attributes << Property.new(*args, &block)
     end
 
+    protected
+
     def attributes
       @_attributes ||= []
       @_attributes.dup

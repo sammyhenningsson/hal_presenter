@@ -114,4 +114,20 @@ class SerializerTest < ActiveSupport::TestCase
     end
   end
 
+  test 'Serializer respects private methods on resource' do
+    class FurtiveChild
+      attr_reader :title, :data
+      def initialize(title, data)
+        @title = title
+        @data = data
+      end
+      private :data
+    end
+
+    obj = FurtiveChild.new("foo", "bar")
+    assert_raises NoMethodError do
+      ChildDecorator.to_hal(obj)
+    end
+  end
+
 end

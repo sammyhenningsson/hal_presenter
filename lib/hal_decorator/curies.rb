@@ -10,6 +10,8 @@ module HALDecorator
       @_curies << Property.new(rel, value, &block)
     end
 
+    protected
+
     def curies
       @_curies ||= []
       @_curies.dup
