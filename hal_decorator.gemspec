@@ -19,8 +19,8 @@ Gem::Specification.new do |gem|
   gem.files         = `git ls-files lib`.split
   gem.require_paths = ["lib"]
 
-  gem.add_development_dependency "rake"
-  gem.add_development_dependency "activesupport"
-  gem.add_development_dependency "minitest"
-  gem.add_development_dependency "byebug"
+  gem.add_development_dependency "rake", '~> 12.0', '>= 10.0'
+  gem.add_development_dependency "activesupport", '~> 5.1', '>= 4.0'
+  gem.add_development_dependency "minitest", '~> 5.10', '>= 5.0'
+  gem.add_development_dependency "byebug", '~> 9.0', '>= 9.0'
 end
