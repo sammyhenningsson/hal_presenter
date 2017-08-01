@@ -70,7 +70,7 @@ end
 post = OpenStruct.new(title: "hello")
 PostSerializer.to_hal(post)   # => {"title": "world"}
 ```
-When a block is passed to `attribute`, then the return value of that block is whats ends up in the payload.
+When a block is passed to `attribute`, then the return value of that block is what ends up in the payload.
 ``` ruby
 class PostSerializer
   include HALDecorator
@@ -92,7 +92,7 @@ class PostSerializer
 end
 PostSerializer.to_hal   # => {"_links": {"self": {"href": "/posts/1"}}}
 ```
-When a block is passed to `link`, the return value of that block is whats ends up as the href of the link.
+When a block is passed to `link`, the return value of that block is what ends up as the href of the link.
 ``` ruby
 class PostSerializer
   include HALDecorator
@@ -101,7 +101,7 @@ class PostSerializer
   end
 end
 post = OpenStruct.new(id: 5)
-PostSerializer.to_hal   # => {"_links": {"self": {"href": "/posts/5"}}}
+PostSerializer.to_hal(post)   # => {"_links": {"self": {"href": "/posts/5"}}}
 ```
 
 ### curie
@@ -114,7 +114,7 @@ class PostSerializer
 end
 PostSerializer.to_hal   # => {"_links":{"doc:user":{"href":"/users/5"},"curies":[{"name":"doc","href":"/api/docs/{rel}","templated":true}]}}
 ```
-When a block is passed to `curie`, the return value of that block is whats ends up as the href of the curie.
+When a block is passed to `curie`, the return value of that block is what ends up as the href of the curie.
 ``` ruby
 class PostSerializer
   include HALDecorator
@@ -122,7 +122,7 @@ class PostSerializer
   link :'doc:user', '/users/5'
 end
 post = OpenStruct.new(id: 5)
-PostSerializer.to_hal   # => {"_links":{"doc:user":{"href":"/users/5"},"curies":[{"name":"doc","href":"/api/docs/{rel}","templated":true}]}}
+PostSerializer.to_hal(post)   # => {"_links":{"doc:user":{"href":"/users/5"},"curies":[{"name":"doc","href":"/api/docs/{rel}","templated":true}]}}
 ```
 
 ### embed
