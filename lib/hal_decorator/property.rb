@@ -16,7 +16,7 @@ module HALDecorator
     def value(resource = nil, options = {})
       @resource = resource
       @options = options
-      if @scope
+      if scope
         value_from_block
       elsif resource && @value.nil?
         resource.public_send(name) if resource.respond_to?(name)
@@ -27,20 +27,27 @@ module HALDecorator
       reset
     end
 
+    def change_scope(new_scope)
+      return unless scope
+      @scope = new_scope
+    end
+
     def method_missing(method, *args, &block)
-      if @scope&.respond_to? method
-        define_singleton_method(method) { |*a, &b| @scope.public_send method, *a, &b }
+      if scope&.respond_to? method
+        define_singleton_method(method) { |*a, &b| scope.public_send method, *a, &b }
         return public_send(method, *args, &block)
       end
       super
     end
 
     def respond_to_missing?(method, include_private = false)
-      return true if @scope&.respond_to? method
+      return true if scope&.respond_to? method
       super
     end
 
     private
+
+    attr_reader :scope
 
     def reset
       @resource = nil

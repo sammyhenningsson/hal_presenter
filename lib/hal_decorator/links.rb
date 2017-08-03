@@ -12,18 +12,35 @@ module HALDecorator
         @http_method = http_method
         super(rel, value, &block)
       end
+
+      def rel
+        name
+      end
     end
 
     def link(rel, value = nil, method: nil, methods: nil, &block)
-      @_links ||= []
+      @_links ||= init_links
+      @_links = @_links.reject { |link| link.rel == rel }
       @_links << Link.new(rel, value, http_method: method || methods, &block)
     end
 
     protected
 
     def links
-      @_links ||= []
-      @_links.dup
+      @_links ||= init_links
+    end
+
+    private
+
+    def init_links
+      return [] unless is_a? Class
+      if self < HALDecorator && ancestors[1].respond_to?(:links, true)
+        ancestors[1].links.each do |link|
+          link.change_scope(self)
+        end
+      else
+        []
+      end
     end
   end
 end

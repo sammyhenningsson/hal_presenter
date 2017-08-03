@@ -131,22 +131,22 @@ class SerializerTest < ActiveSupport::TestCase
   end
 
   test 'multiple nested embeds' do
-    class C
+    c = Class.new do
       include HALDecorator
       link :self, '/grandchild'
       attribute :data { resource.data }
     end
-    class B
+    b = Class.new do
       include HALDecorator
       link :self, '/child'
       attribute :data { resource.data }
-      embed :child, decorator_class: C
+      embed :child, decorator_class: c
     end
-    class A
+    a = Class.new do
       include HALDecorator
       link :self, '/'
       attribute :data { resource.data }
-      embed :child, decorator_class: B
+      embed :child, decorator_class: b
     end
 
     obj = OpenStruct.new(
@@ -188,8 +188,233 @@ class SerializerTest < ActiveSupport::TestCase
       }
     }
 
-    payload = A.to_hal(obj)
+    payload = a.to_hal(obj)
     assert_sameish_hash(expected, JSON.parse(payload))
+  end
+
+  test 'inheritance of model' do
+    # TODO
+  end
+
+  test 'inheritance of attributes' do
+    decorator_a = Class.new do
+      include HALDecorator
+      def self.a; "A"; end
+      attribute :a { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
+    end
+
+    decorator_b = Class.new(decorator_a) do
+      def self.b; "B"; end
+      attribute :b { b }
+      attribute :x { "#{a}" }
+    end
+
+    decorator_c = Class.new(decorator_b) do
+      def self.c; "C"; end
+      attribute :b, 'bc'
+      attribute :c { c }
+      attribute :y { "#{a}#{b}" }
+    end
+
+    decorator_a.to_hal(nil).tap do |payload|
+      assert_sameish_hash({a: 'A'}, JSON.parse(payload))
+    end
+
+    decorator_b.to_hal(nil).tap do |payload|
+      assert_sameish_hash({a: 'A', b: 'B', x: 'A'}, JSON.parse(payload))
+    end
+
+    decorator_c.to_hal(nil, {c: true}).tap do |payload|
+      assert_sameish_hash({a: 'AC', b: 'bc', c: 'C', x: 'A', y: 'AB'}, JSON.parse(payload))
+    end
+  end
+
+  test 'inheritance of links' do
+    decorator_a = Class.new do
+      include HALDecorator
+      def self.a; "A"; end
+      link :a { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
+    end
+
+    decorator_b = Class.new(decorator_a) do
+      def self.b; "B"; end
+      link :b { b }
+      link :x { "#{a}" }
+    end
+
+    decorator_c = Class.new(decorator_b) do
+      def self.c; "C"; end
+      link :b, 'bc'
+      link :c { c }
+      link :y { "#{a}#{b}" }
+    end
+
+    decorator_a.to_hal(nil).tap do |payload|
+      assert_sameish_hash(
+        {
+          _links: {
+            a: {
+              href: 'A'
+            }
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
+
+    decorator_b.to_hal(nil).tap do |payload|
+      assert_sameish_hash(
+        {
+          _links: {
+            a: {
+              href: 'A'
+            },
+            b: {
+              href: 'B'
+            },
+            x: {
+              href: 'A'
+            }
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
+
+    decorator_c.to_hal(nil, {c: true}).tap do |payload|
+      assert_sameish_hash(
+        {
+          _links: {
+            a: {
+              href: 'AC'
+            },
+            b: {
+              href: 'bc'
+            },
+            c: {
+              href: 'C'
+            },
+            x: {
+              href: 'A'
+            },
+            y: {
+              href: 'AB'
+            }
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
+  end
+
+  test 'inheritance of curies' do
+    decorator_a = Class.new do
+      include HALDecorator
+      def self.a; "A"; end
+      curie :a { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
+    end
+
+    decorator_b = Class.new(decorator_a) do
+      def self.b; "B"; end
+      curie :b { b }
+      curie :x { "#{a}" }
+    end
+
+    decorator_c = Class.new(decorator_b) do
+      def self.c; "C"; end
+      curie :b, 'bc'
+      curie :c { c }
+      curie :y { "#{a}#{b}" }
+    end
+
+    decorator_a.to_hal(nil).tap do |payload|
+      assert_sameish_hash(
+        {
+          _links: {
+            curies: [
+              {
+                name: 'a',
+                href: 'A',
+                templated: true
+              }
+            ]
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
+
+    decorator_b.to_hal(nil).tap do |payload|
+      assert_sameish_hash(
+        {
+          _links: {
+            curies: [
+              {
+                name: 'a',
+                href: 'A',
+                templated: true
+              },
+              {
+                name: 'b',
+                href: 'B',
+                templated: true
+              },
+              {
+                name: 'x',
+                href: 'A',
+                templated: true
+              }
+            ]
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
+
+    decorator_c.to_hal(nil, {c: true}).tap do |payload|
+      assert_sameish_hash(
+        {
+          _links: {
+            curies: [
+              {
+                name: 'a',
+                href: 'AC',
+                templated: true
+              },
+              {
+                name: 'x',
+                href: 'A',
+                templated: true
+              },
+              {
+                name: 'b',
+                href: 'bc',
+                templated: true
+              },
+              {
+                name: 'c',
+                href: 'C',
+                templated: true
+              },
+              {
+                name: 'y',
+                href: 'AB',
+                templated: true
+              }
+            ]
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
+  end
+
+  test 'inheritance of embedded' do
+    # TODO
+  end
+
+  test 'inheritance of collection' do
+    # TODO
   end
 
 end
