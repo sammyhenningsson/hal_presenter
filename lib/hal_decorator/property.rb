@@ -27,6 +27,11 @@ module HALDecorator
       reset
     end
 
+    def change_scope(new_scope)
+      return unless @scope
+      @scope = new_scope
+    end
+
     def method_missing(method, *args, &block)
       if @scope&.respond_to? method
         define_singleton_method(method) { |*a, &b| @scope.public_send method, *a, &b }

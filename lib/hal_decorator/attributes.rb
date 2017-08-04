@@ -14,7 +14,7 @@ module HALDecorator
 
     def attributes
       @_attributes ||= init_attributes
-      @_attributes.dup
+      @_attributes.map(&:dup)
     end
 
     private
@@ -22,13 +22,13 @@ module HALDecorator
     def init_attributes
       return [] unless self.class == Class
       if self < HALDecorator && ancestors[1].respond_to?(:attributes, true)
-        ancestors[1].attributes
+        return ancestors[1].attributes
+        ancestors[1].attributes.each do |attr|
+          attr.change_scope(self)
+        end
       else
         []
       end
-    end
-
-    def super_class
     end
   end
 end
