@@ -91,106 +91,110 @@ class SerializerTest < ActiveSupport::TestCase
     }
   end
 
-#   test 'HALDecorator.to_hal' do
-#     options = { decorator: Decorator }
-#     payload = HALDecorator.to_hal(@obj, options)
-#     assert_sameish_hash(@expected, JSON.parse(payload))
-#   end
-# 
-#   test 'Decorator.to_hal' do
-#     payload = Decorator.to_hal(@obj)
-#     assert_sameish_hash(@expected, JSON.parse(payload))
-#   end
-# 
-#   test 'Decorator.to_hal with options' do
-#     options = { edit_uri: 'foo', child_data: 'optional_data' }
-#     payload = Decorator.to_hal(@obj, options)
-#     result = JSON.parse(payload, symbolize_names: true)
-# 
-#     assert_equal 'foo', result[:_links][:edit][:href]
-#     refute result[:_embedded][:children].empty?
-#     result[:_embedded][:children].each do |child|
-#       assert_equal 'optional_data', child[:data]
-#     end
-#   end
-# 
-#   test 'Serializer respects private methods on resource' do
-#     class FurtiveChild
-#       attr_reader :title, :data
-#       def initialize(title, data)
-#         @title = title
-#         @data = data
-#       end
-#       private :data
-#     end
-# 
-#     obj = FurtiveChild.new("foo", "bar")
-#     assert_raises NoMethodError do
-#       ChildDecorator.to_hal(obj)
-#     end
-#   end
-# 
-#   test 'multiple nested embeds' do
-#     c = Class.new do
-#       include HALDecorator
-#       link :self, '/grandchild'
-#       attribute :data { resource.data }
-#     end
-#     b = Class.new do
-#       include HALDecorator
-#       link :self, '/child'
-#       attribute :data { resource.data }
-#       embed :child, decorator_class: c
-#     end
-#     a = Class.new do
-#       include HALDecorator
-#       link :self, '/'
-#       attribute :data { resource.data }
-#       embed :child, decorator_class: b
-#     end
-# 
-#     obj = OpenStruct.new(
-#       data: 'parent',
-#       child: OpenStruct.new(
-#         data: 'child',
-#         child: OpenStruct.new(
-#           data: 'grandchild'
-#         )
-#       )
-#     )
-# 
-#     expected = {
-#       data: 'parent',
-#       _links: {
-#         self: {
-#           href: '/'
-#         }
-#       },
-#       _embedded: {
-#         child: {
-#           data: 'child',
-#           _links: {
-#             self: {
-#               href: '/child'
-#             }
-#           },
-#           _embedded: {
-#             child: {
-#               data: 'grandchild',
-#               _links: {
-#                 self: {
-#                   href: '/grandchild'
-#                 }
-#               }
-#             }
-#           }
-#         }
-#       }
-#     }
-# 
-#     payload = a.to_hal(obj)
-#     assert_sameish_hash(expected, JSON.parse(payload))
-#   end
+  test 'HALDecorator.to_hal' do
+    options = { decorator: Decorator }
+    payload = HALDecorator.to_hal(@obj, options)
+    assert_sameish_hash(@expected, JSON.parse(payload))
+  end
+
+  test 'Decorator.to_hal' do
+    payload = Decorator.to_hal(@obj)
+    assert_sameish_hash(@expected, JSON.parse(payload))
+  end
+
+  test 'Decorator.to_hal with options' do
+    options = { edit_uri: 'foo', child_data: 'optional_data' }
+    payload = Decorator.to_hal(@obj, options)
+    result = JSON.parse(payload, symbolize_names: true)
+
+    assert_equal 'foo', result[:_links][:edit][:href]
+    refute result[:_embedded][:children].empty?
+    result[:_embedded][:children].each do |child|
+      assert_equal 'optional_data', child[:data]
+    end
+  end
+
+  test 'Serializer respects private methods on resource' do
+    class FurtiveChild
+      attr_reader :title, :data
+      def initialize(title, data)
+        @title = title
+        @data = data
+      end
+      private :data
+    end
+
+    obj = FurtiveChild.new("foo", "bar")
+    assert_raises NoMethodError do
+      ChildDecorator.to_hal(obj)
+    end
+  end
+
+  test 'multiple nested embeds' do
+    c = Class.new do
+      include HALDecorator
+      link :self, '/grandchild'
+      attribute :data { resource.data }
+    end
+    b = Class.new do
+      include HALDecorator
+      link :self, '/child'
+      attribute :data { resource.data }
+      embed :child, decorator_class: c
+    end
+    a = Class.new do
+      include HALDecorator
+      link :self, '/'
+      attribute :data { resource.data }
+      embed :child, decorator_class: b
+    end
+
+    obj = OpenStruct.new(
+      data: 'parent',
+      child: OpenStruct.new(
+        data: 'child',
+        child: OpenStruct.new(
+          data: 'grandchild'
+        )
+      )
+    )
+
+    expected = {
+      data: 'parent',
+      _links: {
+        self: {
+          href: '/'
+        }
+      },
+      _embedded: {
+        child: {
+          data: 'child',
+          _links: {
+            self: {
+              href: '/child'
+            }
+          },
+          _embedded: {
+            child: {
+              data: 'grandchild',
+              _links: {
+                self: {
+                  href: '/grandchild'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    payload = a.to_hal(obj)
+    assert_sameish_hash(expected, JSON.parse(payload))
+  end
+
+  test 'inheritance of model' do
+    # TODO
+  end
 
   test 'inheritance of attributes' do
     decorator_a = Class.new do
@@ -207,7 +211,7 @@ class SerializerTest < ActiveSupport::TestCase
 
     decorator_c = Class.new(decorator_b) do
       def self.c; "C"; end
-      attribute :a, 'ca'
+      attribute :b, 'bc'
       attribute :c { c }
       attribute :y { "#{a}#{b}" }
     end
@@ -220,10 +224,197 @@ class SerializerTest < ActiveSupport::TestCase
       assert_sameish_hash({a: 'A', b: 'B', x: 'A'}, JSON.parse(payload))
     end
 
-    decorator_c.to_hal(nil).tap do |payload|
-      assert_sameish_hash({a: 'ca', b: 'B', c: 'C', x: 'A', y: 'AB'}, JSON.parse(payload))
+    decorator_c.to_hal(nil, {c: true}).tap do |payload|
+      assert_sameish_hash({a: 'AC', b: 'bc', c: 'C', x: 'A', y: 'AB'}, JSON.parse(payload))
+    end
+  end
+
+  test 'inheritance of links' do
+    decorator_a = Class.new do
+      include HALDecorator
+      def self.a; "A"; end
+      link :a { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
     end
 
+    decorator_b = Class.new(decorator_a) do
+      def self.b; "B"; end
+      link :b { b }
+      link :x { "#{a}" }
+    end
+
+    decorator_c = Class.new(decorator_b) do
+      def self.c; "C"; end
+      link :b, 'bc'
+      link :c { c }
+      link :y { "#{a}#{b}" }
+    end
+
+    decorator_a.to_hal(nil).tap do |payload|
+      assert_sameish_hash(
+        {
+          _links: {
+            a: {
+              href: 'A'
+            }
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
+
+    decorator_b.to_hal(nil).tap do |payload|
+      assert_sameish_hash(
+        {
+          _links: {
+            a: {
+              href: 'A'
+            },
+            b: {
+              href: 'B'
+            },
+            x: {
+              href: 'A'
+            }
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
+
+    decorator_c.to_hal(nil, {c: true}).tap do |payload|
+      assert_sameish_hash(
+        {
+          _links: {
+            a: {
+              href: 'AC'
+            },
+            b: {
+              href: 'bc'
+            },
+            c: {
+              href: 'C'
+            },
+            x: {
+              href: 'A'
+            },
+            y: {
+              href: 'AB'
+            }
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
+  end
+
+  test 'inheritance of curies' do
+    decorator_a = Class.new do
+      include HALDecorator
+      def self.a; "A"; end
+      curie :a { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
+    end
+
+    decorator_b = Class.new(decorator_a) do
+      def self.b; "B"; end
+      curie :b { b }
+      curie :x { "#{a}" }
+    end
+
+    decorator_c = Class.new(decorator_b) do
+      def self.c; "C"; end
+      curie :b, 'bc'
+      curie :c { c }
+      curie :y { "#{a}#{b}" }
+    end
+
+    decorator_a.to_hal(nil).tap do |payload|
+      assert_sameish_hash(
+        {
+          _links: {
+            curies: [
+              {
+                name: 'a',
+                href: 'A',
+                templated: true
+              }
+            ]
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
+
+    decorator_b.to_hal(nil).tap do |payload|
+      assert_sameish_hash(
+        {
+          _links: {
+            curies: [
+              {
+                name: 'a',
+                href: 'A',
+                templated: true
+              },
+              {
+                name: 'b',
+                href: 'B',
+                templated: true
+              },
+              {
+                name: 'x',
+                href: 'A',
+                templated: true
+              }
+            ]
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
+
+    decorator_c.to_hal(nil, {c: true}).tap do |payload|
+      assert_sameish_hash(
+        {
+          _links: {
+            curies: [
+              {
+                name: 'a',
+                href: 'AC',
+                templated: true
+              },
+              {
+                name: 'x',
+                href: 'A',
+                templated: true
+              },
+              {
+                name: 'b',
+                href: 'bc',
+                templated: true
+              },
+              {
+                name: 'c',
+                href: 'C',
+                templated: true
+              },
+              {
+                name: 'y',
+                href: 'AB',
+                templated: true
+              }
+            ]
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
+  end
+
+  test 'inheritance of embedded' do
+    # TODO
+  end
+
+  test 'inheritance of collection' do
+    # TODO
   end
 
 end

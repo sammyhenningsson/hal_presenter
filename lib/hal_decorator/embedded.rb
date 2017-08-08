@@ -12,15 +12,28 @@ module HALDecorator
     end
 
     def embed(*args, &block)
-      @_embedded ||= []
+      @_embedded ||= init_embedded
+      @_embedded = @_embedded.reject { |embed| embed.name == args.first }
       @_embedded << Embed.new(*args, &block)
     end
 
     protected
 
     def embedded
-      @_embedded ||= []
-      @_embedded.dup
+      @_embedded ||= init_embedded
+    end
+
+    private
+
+    def init_embedded
+      return [] unless is_a? Class
+      if self < HALDecorator && ancestors[1].respond_to?(:embedded, true)
+        ancestors[1].embedded.each do |embed|
+          embed.change_scope(self)
+        end
+      else
+        []
+      end
     end
   end
 end
