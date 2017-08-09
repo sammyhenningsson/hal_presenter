@@ -5,7 +5,7 @@ class CollectionTest < ActiveSupport::TestCase
 
   Item = Struct.new(:id, :title, :data)
 
-  class Decorator
+  class CollectionDecorator
     include HALDecorator
     model Item
 
@@ -75,8 +75,8 @@ class CollectionTest < ActiveSupport::TestCase
     }
   end
 
-  test 'Decorator.to_collection' do
-    payload = Decorator.to_collection(@items)
+  test 'CollectionDecorator.to_collection' do
+    payload = CollectionDecorator.to_collection(@items)
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
@@ -90,7 +90,6 @@ class CollectionTest < ActiveSupport::TestCase
   test 'to_collection raises execption when no collection_parameters' do
     class DecoratorWithoutCollection
       include HALDecorator
-      model Item
 
       attribute :title
       attribute :data
@@ -105,7 +104,7 @@ class CollectionTest < ActiveSupport::TestCase
   end
 
   test 'HALDecorator.from_hal' do
-    collection = Decorator.from_hal(JSON.generate(@expected))
+    collection = CollectionDecorator.from_hal(JSON.generate(@expected))
     assert_instance_of Array, collection
     assert_equal 3, collection.size
     collection.each_with_index do |item, i|
@@ -119,7 +118,6 @@ class CollectionTest < ActiveSupport::TestCase
   test 'collection can be called without a block' do
     class DecoratorWithoutCollectionBlock
       include HALDecorator
-      model Item
 
       attribute :title
       attribute :data
@@ -134,4 +132,43 @@ class CollectionTest < ActiveSupport::TestCase
     @expected.delete(:_links)
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
+
+  test 'inheritance of collection' do
+    SubItem = Struct.new(:id, :title, :data)
+
+    items = (1..3).map do |i|
+      SubItem.new(i, "title#{i}", "data#{i}")
+    end
+
+    decorator_a = Class.new(CollectionDecorator) do
+      model SubItem
+    end
+
+    decorator_b = Class.new(decorator_a) do
+      collection of: 'entries' do
+        attribute :count
+
+        link :self do
+          '/items?page=1'
+        end
+      end
+    end
+
+    decorator_a.to_collection(items).tap do |payload|
+      assert_sameish_hash(
+        @expected,
+        JSON.parse(payload)
+      )
+    end
+
+    decorator_b.to_collection(items).tap do |payload|
+      expected = @expected
+      expected[:_embedded][:entries] = expected[:_embedded].delete(:items)
+      assert_sameish_hash(
+        expected,
+        JSON.parse(payload)
+      )
+    end
+  end
+
 end

@@ -10,7 +10,8 @@ module HALDecorator
   end
 
   def HALDecorator.lookup_model(decorator)
-    @decorators[decorator]
+    @decorators[decorator] || self < HALDecorator && lookup_model(ancestors[1])
+
   end
 
   def HALDecorator.lookup_decorator(model)
@@ -22,6 +23,13 @@ module HALDecorator
   module Model
     def model(clazz)
       HALDecorator.register(model: clazz, decorator: self)
+    end
+
+    def inherited(subclass)
+      if model = HALDecorator.lookup_model(self)
+        HALDecorator.register(model: model, decorator: subclass)
+      end
+      super
     end
   end
 end
