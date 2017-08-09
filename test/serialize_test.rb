@@ -3,7 +3,13 @@ require 'ostruct'
 
 class SerializerTest < ActiveSupport::TestCase
 
-  Child = Struct.new(:title, :data)
+  class Child
+    attr_accessor :title, :data
+    def initialize(title, data)
+      @title = title
+      @data = data
+    end
+  end
 
   class ParentDecorator
     include HALDecorator
@@ -193,7 +199,42 @@ class SerializerTest < ActiveSupport::TestCase
   end
 
   test 'inheritance of model' do
-    # TODO
+    foo = Class.new(Child) do
+      def f; 'F'; end
+    end
+
+    decorator_a = Class.new(ChildDecorator) do
+      attribute :a, 'A'
+    end
+
+    decorator_b = Class.new(decorator_a) do
+      model foo
+      attribute :f
+    end
+
+    child = Child.new(:child1, :child1_data)
+    foo = foo.new(:foo1, :foo1_data)
+
+    HALDecorator.to_hal(child).tap do |payload|
+      assert_sameish_hash(
+        {
+          data: 'child1_data',
+          a: 'A'
+        },
+        JSON.parse(payload)
+      )
+    end
+
+    HALDecorator.to_hal(foo).tap do |payload|
+      assert_sameish_hash(
+        {
+          data: 'foo1_data',
+          a: 'A',
+          f: 'F'
+        },
+        JSON.parse(payload)
+      )
+    end
   end
 
   test 'inheritance of attributes' do
@@ -410,11 +451,69 @@ class SerializerTest < ActiveSupport::TestCase
   end
 
   test 'inheritance of embedded' do
-    # TODO
-  end
+    decorator_a = Class.new do
+      include HALDecorator
+      embed :r, decorator_class: ChildDecorator
+    end
 
-  test 'inheritance of collection' do
-    # TODO
+    decorator_b = Class.new(decorator_a) do
+      embed :b, decorator_class: ChildDecorator
+    end
+
+    decorator_c = Class.new(decorator_b) do
+      embed :r, decorator_class: ParentDecorator
+    end
+
+    obj = OpenStruct.new(
+      to_be: 'ignored',
+      r: Child.new(:child_r, :child_r_data),
+      b: Child.new(:child_b, :child_b_data)
+    )
+
+    decorator_a.to_hal(obj).tap do |payload|
+      assert_sameish_hash(
+        {
+          _embedded: {
+            r:  {
+              data: "child_r_data"
+            }
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
+
+    decorator_b.to_hal(obj).tap do |payload|
+      assert_sameish_hash(
+        {
+          _embedded: {
+            r:  {
+              data: "child_r_data"
+            },
+            b:  {
+              data: "child_b_data"
+            }
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
+
+    decorator_c.to_hal(obj).tap do |payload|
+      assert_sameish_hash(
+        {
+          _embedded: {
+            r:  {
+              title: "child_r"
+            },
+            b:  {
+              data: "child_b_data"
+            }
+          }
+        },
+        JSON.parse(payload)
+      )
+    end
   end
 
 end

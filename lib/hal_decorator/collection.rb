@@ -25,7 +25,15 @@ module HALDecorator
     protected
 
     def collection_parameters
-      @_parameters ||= nil
+      @_parameters ||= init_collection_params
+    end
+
+    private
+
+    def init_collection_params
+      return unless is_a?(Class) && self < HALDecorator
+      return unless ancestors[1].respond_to?(:collection_parameters, true)
+      ancestors[1].collection_parameters
     end
   end
 end

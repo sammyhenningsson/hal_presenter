@@ -10,7 +10,8 @@ module Minitest
       assert(
         expected.keys.size == actual.keys.size,
         "Expected hash with #{expected.keys.size} keys, " \
-        "got hash with #{actual.keys.size} keys."
+        "got hash with #{actual.keys.size} keys.\n" \
+        "Expected: #{expected}\nActual: #{actual}"
       )
       assert_equal(stringify_keys(expected), stringify_keys(actual), msg)
     end
