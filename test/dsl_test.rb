@@ -141,7 +141,7 @@ class DSLTest < ActiveSupport::TestCase
     end
 
     collection = @serializer.send(:collection_parameters)
-    assert collection
+    assert_instance_of HALDecorator::Collection::CollectionParameters, collection
     assert_equal 'items', collection.name
     assert_equal 1, collection.send(:attributes).size
     assert_equal 1, collection.send(:links).size
@@ -155,5 +155,16 @@ class DSLTest < ActiveSupport::TestCase
       end
     end
 
+  end
+
+  test 'post_serialize hook' do
+    @serializer.post_serialize do |hash|
+      hash[:added] = 'more'
+    end
+    hook = @serializer.send(:post_serialize_hook)
+    assert_instance_of HALDecorator::SerializeHooks::Hook, hook
+    serialized = { foo: 5 }
+    hook.run(nil, nil, serialized)
+    assert_equal({foo: 5, added: 'more' }, serialized)
   end
 end

@@ -3,8 +3,6 @@ require 'hal_decorator/property'
 module HALDecorator
   module Collection
 
-    attr_reader :collection_name
-
     class CollectionParameters
       include Attributes
       include Links
