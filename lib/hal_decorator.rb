@@ -6,7 +6,7 @@ require 'hal_decorator/model'
 require 'hal_decorator/serializer'
 require 'hal_decorator/deserializer'
 require 'hal_decorator/collection'
-
+require 'hal_decorator/serialize_hooks'
 
 module HALDecorator
 
@@ -20,6 +20,7 @@ module HALDecorator
     include HALDecorator::Curies
     include HALDecorator::Embedded
     include HALDecorator::Collection
+    include HALDecorator::SerializeHooks
     include HALDecorator::Model
     include HALDecorator::Serializer
     include HALDecorator::Deserializer

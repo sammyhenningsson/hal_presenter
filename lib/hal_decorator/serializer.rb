@@ -30,56 +30,63 @@ module HALDecorator
 
     protected
 
-    def to_hash(object, options)
+    def to_hash(resource, options)
       {}.tap do |serialized|
-        serialized.merge! serialize_attributes(object, options)
-        serialized.merge! serialize_links(object, options)
-        serialized.merge! serialize_embedded(object, options)
+        serialized.merge! serialize_attributes(resource, options)
+        serialized.merge! serialize_links(resource, options)
+        serialized.merge! serialize_embedded(resource, options)
+
+        run_post_serialize_hook!(resource, options, serialized)
       end
     end
 
-    def serialize_attributes(object, options)
-      _serialize_attributes(attributes, object, options)
+    def serialize_attributes(resource, options)
+      _serialize_attributes(attributes, resource, options)
     end
 
-    def serialize_links(object, options)
-      _serialize_links(links, curies, object, options)
+    def serialize_links(resource, options)
+      _serialize_links(links, curies, resource, options)
     end
 
-    def serialize_curies(object, options)
-      _serialize_curies(curies, object, options)
+    def serialize_curies(resource, options)
+      _serialize_curies(curies, resource, options)
     end
 
-    def serialize_embedded(object, options)
-      _serialize_embedded(embedded, object, options)
+    def serialize_embedded(resource, options)
+      _serialize_embedded(embedded, resource, options)
+    end
+
+    def run_post_serialize_hook!(resource, options, serialized)
+      hook = post_serialize_hook
+      hook&.run(resource, options, serialized)
     end
 
     private
 
-    def _serialize_attributes(attributes, object, options)
+    def _serialize_attributes(attributes, resource, options)
       attributes.each_with_object({}) do |attribute, hash|
-        hash[attribute.name] = attribute.value(object, options)
+        hash[attribute.name] = attribute.value(resource, options)
       end
     end
 
-    def _serialize_links(links, curies, object, options)
+    def _serialize_links(links, curies, resource, options)
       serialized = links.each_with_object({}) do |link, hash|
-        value = link.value(object, options) or next
+        value = link.value(resource, options) or next
         hash[link.rel] = { href: value }.tap do |s|
           s[:method] = link.http_method if link.http_method
         end
       end
-      curies = _serialize_curies(curies, object, options)
+      curies = _serialize_curies(curies, resource, options)
       serialized[:curies] = curies if curies.any?
       return {} if serialized.empty?
       { _links: serialized }
     end
 
-    def _serialize_curies(curies, object, options)
+    def _serialize_curies(curies, resource, options)
       curies.each_with_object([]) do |curie, array|
         array << {
           name: curie.name,
-          href: curie.value(object, options),
+          href: curie.value(resource, options),
           templated: true
         }
       end
