@@ -2,6 +2,10 @@ require 'json'
 
 module HALDecorator
 
+  def self.from_hal(decorator, payload, resource = nil)
+    decorator.from_hal(payload, resource)
+  end
+
   module Deserializer
 
     class Error < StandardError; end
