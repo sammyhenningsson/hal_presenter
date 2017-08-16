@@ -108,6 +108,24 @@ class SerializerTest < ActiveSupport::TestCase
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
+  test 'Serialize full links with Decorator.base_href' do
+    HALDecorator.base_href = 'https://example.com/'
+    @expected[:_links].each do |key, value|
+      if key == :curies
+        value.each { |curie| curie[:href].prepend('https://example.com') }
+      else
+        value[:href].prepend 'https://example.com'
+      end
+    end
+
+    begin
+      payload = Decorator.to_hal(@obj)
+    ensure
+      HALDecorator.base_href = nil
+    end
+    assert_sameish_hash(@expected, JSON.parse(payload))
+  end
+
   test 'Decorator.to_hal with options' do
     options = { edit_uri: 'foo', child_data: 'optional_data' }
     payload = Decorator.to_hal(@obj, options)

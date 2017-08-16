@@ -1,6 +1,17 @@
 require 'hal_decorator/property'
 
 module HALDecorator
+
+  def self.base_href=(base)
+    @base_href = base&.sub(%r(/*$), '/')
+  end
+
+  def self.href(href)
+    return href if (@base_href ||= '').empty?
+    return href if href =~ %r(\w+://) || !href.start_with?('/')
+    @base_href + href.sub(%r(^/), '')
+  end
+
   module Links
 
     class Link < HALDecorator::Property

@@ -87,8 +87,8 @@ module HALDecorator
 
     def _serialize_links(links, curies, resource, options)
       serialized = links.each_with_object({}) do |link, hash|
-        value = link.value(resource, options) or next
-        hash[link.rel] = { href: value }.tap do |s|
+        href = link.value(resource, options) or next
+        hash[link.rel] = { href: HALDecorator.href(href) }.tap do |s|
           s[:method] = link.http_method if link.http_method
         end
       end
@@ -100,9 +100,10 @@ module HALDecorator
 
     def _serialize_curies(curies, resource, options)
       curies.each_with_object([]) do |curie, array|
+        href = curie.value(resource, options) or next
         array << {
           name: curie.name,
-          href: curie.value(resource, options),
+          href: HALDecorator.href(href),
           templated: true
         }
       end
