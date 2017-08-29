@@ -21,12 +21,9 @@ module HALDecorator
 
     def init_curies
       return [] unless is_a? Class
-      if self < HALDecorator && ancestors[1].respond_to?(:curies, true)
-        ancestors[1].curies.each do |curie|
-          curie.change_scope(self)
-        end
-      else
-        []
+      return [] unless superclass.respond_to?(:curies, true)
+      superclass.curies.each do |curie|
+        curie.change_scope(self)
       end
     end
   end

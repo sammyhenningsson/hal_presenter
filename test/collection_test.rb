@@ -6,7 +6,7 @@ class CollectionTest < ActiveSupport::TestCase
   Item = Struct.new(:id, :title, :data)
 
   class CollectionDecorator
-    include HALDecorator
+    extend HALDecorator
     model Item
 
     attribute :title
@@ -89,7 +89,7 @@ class CollectionTest < ActiveSupport::TestCase
 
   test 'to_collection raises execption when no collection_parameters' do
     class DecoratorWithoutCollection
-      include HALDecorator
+      extend HALDecorator
 
       attribute :title
       attribute :data
@@ -117,7 +117,7 @@ class CollectionTest < ActiveSupport::TestCase
 
   test 'collection can be called without a block' do
     class DecoratorWithoutCollectionBlock
-      include HALDecorator
+      extend HALDecorator
 
       attribute :title
       attribute :data

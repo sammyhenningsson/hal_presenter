@@ -29,9 +29,10 @@ module HALDecorator
     private
 
     def init_collection_params
-      return unless is_a?(Class) && self < HALDecorator
-      return unless ancestors[1].respond_to?(:collection_parameters, true)
-      ancestors[1].collection_parameters
+      return unless is_a? Class
+      if superclass.respond_to?(:collection_parameters, true)
+        superclass.collection_parameters
+      end
     end
   end
 end

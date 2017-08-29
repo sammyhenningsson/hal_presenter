@@ -8,14 +8,14 @@ class DeserializerTest < ActiveSupport::TestCase
   Association = Struct.new(:title)
 
   class AssociationDecorator
-    include HALDecorator
+    extend HALDecorator
     model Association
 
     attribute :title
   end
 
   class Decorator
-    include HALDecorator
+    extend HALDecorator
     model Model
 
     attribute :title

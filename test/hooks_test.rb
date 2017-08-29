@@ -4,7 +4,7 @@ require 'ostruct'
 class HooksTest < ActiveSupport::TestCase
 
   class HooksDecorator
-    include HALDecorator
+    extend HALDecorator
 
     attribute :title
 
