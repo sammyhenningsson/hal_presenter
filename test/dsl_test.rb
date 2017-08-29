@@ -7,7 +7,7 @@ class DSLTest < ActiveSupport::TestCase
       from_object: 'string_from_obj'.freeze,
       from_block: 'string_from_block'.freeze
     )
-    @serializer = Class.new { include HALDecorator }
+    @serializer = Class.new { extend HALDecorator }
   end
 
   test 'model' do

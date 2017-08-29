@@ -12,13 +12,13 @@ class SerializerTest < ActiveSupport::TestCase
   end
 
   class ParentDecorator
-    include HALDecorator
+    extend HALDecorator
 
     attribute :title
   end
 
   class ChildDecorator
-    include HALDecorator
+    extend HALDecorator
     model Child
 
     attribute :data do
@@ -27,7 +27,7 @@ class SerializerTest < ActiveSupport::TestCase
   end
 
   class Decorator
-    include HALDecorator
+    extend HALDecorator
 
     attribute :title
     link :self do
@@ -156,18 +156,18 @@ class SerializerTest < ActiveSupport::TestCase
 
   test 'multiple nested embeds' do
     c = Class.new do
-      include HALDecorator
+      extend HALDecorator
       link :self, '/grandchild'
       attribute :data { resource.data }
     end
     b = Class.new do
-      include HALDecorator
+      extend HALDecorator
       link :self, '/child'
       attribute :data { resource.data }
       embed :child, decorator_class: c
     end
     a = Class.new do
-      include HALDecorator
+      extend HALDecorator
       link :self, '/'
       attribute :data { resource.data }
       embed :child, decorator_class: b
@@ -257,7 +257,7 @@ class SerializerTest < ActiveSupport::TestCase
 
   test 'inheritance of attributes' do
     decorator_a = Class.new do
-      include HALDecorator
+      extend HALDecorator
       def self.a; "A"; end
       attribute :a { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
     end
@@ -290,7 +290,7 @@ class SerializerTest < ActiveSupport::TestCase
 
   test 'inheritance of links' do
     decorator_a = Class.new do
-      include HALDecorator
+      extend HALDecorator
       def self.a; "A"; end
       link :a { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
     end
@@ -368,7 +368,7 @@ class SerializerTest < ActiveSupport::TestCase
 
   test 'inheritance of curies' do
     decorator_a = Class.new do
-      include HALDecorator
+      extend HALDecorator
       def self.a; "A"; end
       curie :a { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
     end
@@ -470,7 +470,7 @@ class SerializerTest < ActiveSupport::TestCase
 
   test 'inheritance of embedded' do
     decorator_a = Class.new do
-      include HALDecorator
+      extend HALDecorator
       embed :r, decorator_class: ChildDecorator
     end
 

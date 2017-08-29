@@ -33,9 +33,9 @@ module HALDecorator
     private
 
     def init_post_serialize_hook
-      return unless is_a?(Class) && self < HALDecorator
-      return unless ancestors[1].respond_to?(:post_serialize_hook, true)
-      ancestors[1].post_serialize_hook
+      return unless is_a? Class
+      return unless superclass.respond_to?(:post_serialize_hook, true)
+      superclass.post_serialize_hook
     end
   end
 end

@@ -27,12 +27,9 @@ module HALDecorator
 
     def init_embedded
       return [] unless is_a? Class
-      if self < HALDecorator && ancestors[1].respond_to?(:embedded, true)
-        ancestors[1].embedded.each do |embed|
-          embed.change_scope(self)
-        end
-      else
-        []
+      return [] unless superclass.respond_to?(:embedded, true)
+      superclass.embedded.each do |embed|
+        embed.change_scope(self)
       end
     end
   end
