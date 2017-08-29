@@ -8,8 +8,8 @@ module HALDecorator
 
   def self.href(href)
     return href if (@base_href ||= '').empty?
-    return href if href =~ %r(\w+://) || !href.start_with?('/')
-    @base_href + href.sub(%r(^/), '')
+    return href if href =~ %r(\A(\w+:/)?/)
+    @base_href + href
   end
 
   module Links
