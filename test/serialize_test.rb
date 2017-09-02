@@ -30,6 +30,7 @@ class SerializerTest < ActiveSupport::TestCase
     extend HALDecorator
 
     attribute :title
+    attribute :comment
     link :self do
       "/items/#{resource.id}"
     end
@@ -55,13 +56,15 @@ class SerializerTest < ActiveSupport::TestCase
     @obj = OpenStruct.new(
       id: 5,
       title: 'some_title',
-      comment: 'some_comments',
+      comment: 'some comments',
+      extra: 'lorem ipsum',
       parent: parent,
       children: [child1, child2]
     )
 
     @expected = {
       title: 'some_title',
+      comment: 'some comments',
       _links: {
         self: {
           href: '/items/5'
@@ -106,6 +109,45 @@ class SerializerTest < ActiveSupport::TestCase
   test 'Decorator.to_hal' do
     payload = Decorator.to_hal(@obj)
     assert_sameish_hash(@expected, JSON.parse(payload))
+  end
+
+  test 'Policy is honored' do
+    class Policy
+      def initialize(_, _); end
+
+      def attribute?(attribute)
+        attribute == :title
+      end
+
+      def link?(rel)
+        rel == :self
+      end
+
+      def embed?(name)
+        name == :parent
+      end
+    end
+
+    class PolicyDecorator < Decorator
+      policy Policy
+    end
+
+    expected = {
+      title: 'some_title',
+      _links: {
+        self: {
+          href: '/items/5'
+        }
+      },
+      _embedded: {
+        parent: {
+          title: 'some_parent'
+        }
+      }
+    }
+
+    payload = PolicyDecorator.to_hal(@obj)
+    assert_sameish_hash(expected, JSON.parse(payload))
   end
 
   test 'Serialize full links with Decorator.base_href' do
@@ -225,7 +267,7 @@ class SerializerTest < ActiveSupport::TestCase
       attribute :a, 'A'
     end
 
-    decorator_b = Class.new(decorator_a) do
+    Class.new(decorator_a) do
       model foo
       attribute :f
     end

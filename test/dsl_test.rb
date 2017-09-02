@@ -17,6 +17,12 @@ class DSLTest < ActiveSupport::TestCase
     assert_equal @serializer, HALDecorator.lookup_decorator(resource).first
   end
 
+  test 'policy' do
+    p = Class.new
+    @serializer.policy p
+    assert_equal p, @serializer.send(:policy_class)
+  end
+
   test 'attribute with value from contant' do
     @serializer.attribute :from_constant, 'some_string'.freeze
     attribute = @serializer.send(:attributes).first

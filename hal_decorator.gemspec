@@ -1,11 +1,11 @@
 # -*- encoding: utf-8 -*-
 Gem::Specification.new do |gem|
   gem.name        = 'hal_decorator'
-  gem.version     = '0.3.0'
-  gem.date        = '2017-08-29'
+  gem.version     = '0.3.1'
+  gem.date        = '2017-09-03'
   gem.summary     = "HAL serializer"
   gem.description = <<~EOS
-                    Serialize resources according to
+                    A DSL for serializing resources according to
                     HypertextApplicationLanguage.
                     EOS
   gem.authors     = ["Sammy Henningsson"]

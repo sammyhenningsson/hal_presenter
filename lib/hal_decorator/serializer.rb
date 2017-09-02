@@ -36,8 +36,8 @@ module HALDecorator
       end
       links = parameters.links
       curies = parameters.curies
-      serialized = _serialize_attributes(parameters.attributes, resources, options)
-      serialized.merge! _serialize_links(links, curies, resources, options)
+      serialized = _serialize_attributes(parameters.attributes, resources, nil, options)
+      serialized.merge! _serialize_links(links, curies, resources, nil, options)
 
       serialized_resources = resources.map { |resource| to_hash(resource, options) }
       serialized[:_embedded] = { parameters.name => serialized_resources }
@@ -47,29 +47,31 @@ module HALDecorator
     protected
 
     def to_hash(resource, options)
+      policy = policy_class&.new(options[:current_user], resource)
+
       {}.tap do |serialized|
-        serialized.merge! serialize_attributes(resource, options)
-        serialized.merge! serialize_links(resource, options)
-        serialized.merge! serialize_embedded(resource, options)
+        serialized.merge! serialize_attributes(resource, policy, options)
+        serialized.merge! serialize_links(resource, policy, options)
+        serialized.merge! serialize_embedded(resource, policy, options)
 
         run_post_serialize_hook!(resource, options, serialized)
       end
     end
 
-    def serialize_attributes(resource, options)
-      _serialize_attributes(attributes, resource, options)
+    def serialize_attributes(resource, policy, options)
+      _serialize_attributes(attributes, resource, policy, options)
     end
 
-    def serialize_links(resource, options)
-      _serialize_links(links, curies, resource, options)
+    def serialize_links(resource, policy, options)
+      _serialize_links(links, curies, resource, policy, options)
     end
 
-    def serialize_curies(resource, options)
-      _serialize_curies(curies, resource, options)
+    def serialize_curies(resource, policy, options)
+      _serialize_curies(curies, resource, policy, options)
     end
 
-    def serialize_embedded(resource, options)
-      _serialize_embedded(embedded, resource, options)
+    def serialize_embedded(resource, policy, options)
+      _serialize_embedded(embedded, resource, policy, options)
     end
 
     def run_post_serialize_hook!(resource, options, serialized)
@@ -79,27 +81,30 @@ module HALDecorator
 
     private
 
-    def _serialize_attributes(attributes, resource, options)
+    def _serialize_attributes(attributes, resource, policy, options)
       attributes.each_with_object({}) do |attribute, hash|
+        next if policy && !policy.attribute?(attribute.name)
         hash[attribute.name] = attribute.value(resource, options)
       end
     end
 
-    def _serialize_links(links, curies, resource, options)
+    def _serialize_links(links, curies, resource, policy, options)
       serialized = links.each_with_object({}) do |link, hash|
+        next if policy && !policy.link?(link.rel)
         href = link.value(resource, options) or next
         hash[link.rel] = { href: HALDecorator.href(href) }.tap do |s|
           s[:method] = link.http_method if link.http_method
         end
       end
-      curies = _serialize_curies(curies, resource, options)
+      curies = _serialize_curies(curies, resource, policy, options)
       serialized[:curies] = curies if curies.any?
       return {} if serialized.empty?
       { _links: serialized }
     end
 
-    def _serialize_curies(curies, resource, options)
+    def _serialize_curies(curies, resource, policy, options)
       curies.each_with_object([]) do |curie, array|
+        next if policy && !policy.link?(curie.name)
         href = curie.value(resource, options) or next
         array << {
           name: curie.name,
@@ -109,8 +114,9 @@ module HALDecorator
       end
     end
 
-    def _serialize_embedded(embedded, object, options)
+    def _serialize_embedded(embedded, object, policy, options)
       serialized = embedded.each_with_object({}) do |embed, hash|
+        next if policy && !policy.embed?(embed.name)
         resource = embed.value(object, options) or next
         decorator = embed.decorator_class
         hash[embed.name] = 

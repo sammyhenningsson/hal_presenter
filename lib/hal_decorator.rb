@@ -1,8 +1,10 @@
-require 'hal_decorator/attributes'
-require 'hal_decorator/embedded'
-require 'hal_decorator/links'
-require 'hal_decorator/curies'
 require 'hal_decorator/model'
+require 'hal_decorator/policy'
+require 'hal_decorator/policy/dsl'
+require 'hal_decorator/attributes'
+require 'hal_decorator/links'
+require 'hal_decorator/embedded'
+require 'hal_decorator/curies'
 require 'hal_decorator/serializer'
 require 'hal_decorator/deserializer'
 require 'hal_decorator/collection'
@@ -18,4 +20,5 @@ module HALDecorator
   include HALDecorator::Model
   include HALDecorator::Serializer
   include HALDecorator::Deserializer
+  include HALDecorator::Policy
 end
