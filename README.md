@@ -19,6 +19,7 @@ $ bundle
 ## Defining a Serializer
 Serializers are defined by extending `HALDecorator` in the begining of the class declaration. This will add the following class methods:
 - [`model(clazz)`](#model)
+- [`policy(clazz)`](#policy)
 - [`attribute(name, value = nil, &block)`](#attribute)
 - [`link(rel, value = nil, &block)`](#link)
 - [`curie(rel, value = nil, &block)`](#curie)
@@ -51,6 +52,37 @@ The serializer class may also be specified as an option, using the `:decorator` 
 HALDecorator.to_hal(post, {decorator: PostSerializer})
 ```
 Even though the `model` class method is optional, it is very useful if the serializer should be selected dynamically and when the serializer is  used for deserialization.
+
+### policy
+The `policy` class method is used to register a poliy class that should be used during serialization. The purpose of using a policy class is to exclude properties from being serialized. Using polices is not required, but its a nice way to structure rules about what should be shown and what actions (links) are possible to perform on a resource. The latter is usually tightly coupled with authorization in controllers. This means we can create polices with a bunch of rules and use the same policy in both serialization and in controllers. This plays very nicely with gems like [Pundit](https://github.com/elabs/pundit).
+Instances of the class registered with this method needs to respond to the following methods:
+- [`initialize(current_user, resource`]
+- [`attribute?(name)`]
+- [`link?(rel)`]
+- [`embed?(name)`]  
+Additional methods will be needed for authorization in controller. Such as `create?`, `update?` etc when using Pundit.
+A policy instance will be instantiated with the resource being serialized and the option `:current_user` passed to to_hal. For each attribute being serialized a call to `policy_instance.attribute?(name)` will be made. If that call returns `true` then the attribute will be serialized. Else it will not end up in the serialized payload. Same goes for links and embedded resources. Note that `link?(rel)` is used to discard both normal links and curies.
+Using the following Policy would discard everthing execpt a title attribute, the self link and embedded resources named foo.
+``` ruby
+class SomePolicy
+  def initialize(current_user, resource)
+  end
+  
+  def attribute?(name)
+    name.to_s == 'title'
+  end
+  
+  def link?(rel)
+    rel == :self
+  end
+  
+  def embed?(name)
+    name.to_s == 'foo'
+  end
+end
+
+```
+This gem includes a DSL that simplifies creating policies. See [`HALDecorator::Policy::DSL`](#Policy-DSL).
 
 ### attribute
 The `attribute` class method specifies an attribute (property) to be serialized. The first argument, `name`, is required and must be a symbol of the attribute name. When `attribute` is called with only one argument, the resources being serialized are expected to respond to that argument and the returned value is what ends up in the payload.
@@ -597,3 +629,41 @@ class PostSerializer
   link :self, '/posts/1'
 end
 PostSerializer.to_hal   # => {"_links": {"self": {"href": "https://localhost:3000/posts/1"}}}
+```
+## Policy DSL
+HALDecorator includes a DSL for creating polices. By including `HALDecorator::Policy::DSL` into your policy class you get the following class methods:
+- `attribute(name, &block)`
+- `link(rel, &block)`
+- `embed(name, &block)`  
+These methods all work the same way and creates a rule named `name` (`rel` for links). If the block evaluates to `true` then the corresponding attribute, link, embedded resource will be serialized. Otherwise it will not be serialized. The block has access to the current user and the resource that should be serialized from the methods `current_user` resp. `resource`.
+```ruby
+class UserPolicy
+  include HALDecorator::Policy::DSL
+
+  attribute :name do
+    #show name if user is logged in
+    !current_user.nil?
+  end
+  
+  attribute :password do
+    # Only show password if the resource belongs to current_user
+    current_user && resource.user.id == current_user.id
+  end
+  
+  link :self do
+    true
+  end
+  
+  link :edit do
+    edit?
+  end
+  
+  embed :posts do
+    !current_user.nil? && !current_user.posts.empty?
+  end
+  
+  def edit?
+    current_user && resource.user.id == current_user.id
+  end
+```
+Notice the instance method `#edit?` which is typically used by [Pundit](https://github.com/elabs/pundit). That method is called from the block belonging to the rule for the edit link. This means that we can use the same policy class both for serialization and for authorization (and have the rules in one place). This is great since we should only provide links to actions that are possible/authorized and we don't want to sync this between controller code and serialization code.
