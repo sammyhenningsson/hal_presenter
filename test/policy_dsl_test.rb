@@ -9,6 +9,15 @@ class PolicyDSLTest < ActiveSupport::TestCase
     @resource = OpenStruct.new(title: 'hello')
   end
 
+  test 'allow_by_default' do
+    @policy.allow_by_default :attributes, :embedded
+
+    policy = @policy.new(@user, @resource)
+    assert_equal true, policy.attribute?(:name)
+    assert_equal false, policy.link?(:delete)
+    assert_equal true, policy.embed?(:delete)
+  end
+
   test 'attribute' do
     @policy.attribute :name do
       current_user.name == 'bengt'
@@ -18,9 +27,12 @@ class PolicyDSLTest < ActiveSupport::TestCase
       resource.title && false
     end
 
+    @policy.attribute :comment
+
     policy = @policy.new(@user, @resource)
     assert_equal true, policy.attribute?(:name)
     assert_equal false, policy.attribute?(:password)
+    assert_equal true, policy.attribute?(:comment)
   end
     
   test 'link' do

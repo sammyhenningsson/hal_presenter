@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 Gem::Specification.new do |gem|
   gem.name        = 'hal_decorator'
-  gem.version     = '0.3.1'
+  gem.version     = '0.3.2'
   gem.date        = '2017-09-03'
   gem.summary     = "HAL serializer"
   gem.description = <<~EOS

@@ -2,26 +2,79 @@ module HALDecorator
   module Policy
     module DSL
 
+      class Rules
+
+        def attributes
+          @attributes ||= Hash.new(Proc.new { false })
+        end
+
+        def links
+          @links ||= Hash.new(Proc.new { false })
+        end
+
+        def embedded
+          @embedded ||= Hash.new(Proc.new { false })
+        end
+
+        private :attributes, :links, :embedded
+
+        def defaults(*types, value: false)
+          types.each do |t|
+            send(t).default= Proc.new { value }
+          end
+        end
+
+        def attribute_rule_for(name)
+          attributes[name]
+        end
+
+        def add_attribute(name, block)
+          attributes[name] = block
+        end
+
+        def link_rule_for(rel)
+          links[rel]
+        end
+
+        def add_link(rel, block)
+          links[rel] = block
+        end
+
+        def embed_rule_for(name)
+          embedded[name]
+        end
+
+        def add_embed(name, block)
+          embedded[name] = block
+        end
+
+      end
+
       module ClassMethods
-        attr_reader :rules
 
-        def attribute(name, &block)
-          @rules ||= {}
-          @rules[:attributes] ||= {}
-          @rules[:attributes][name] = block
+        def allow_by_default(*types)
+          rules.defaults(*types, value: true)
         end
 
-        def link(rel, &block)
-          @rules ||= {}
-          @rules[:links] ||= {}
-          @rules[:links][rel] = block
+        def attribute(name)
+          b = block_given? ? Proc.new : Proc.new { true }
+          rules.add_attribute(name, b)
         end
 
-        def embed(name, &block)
-          @rules ||= {}
-          @rules[:embeds] ||= {}
-          @rules[:embeds][name] = block
+        def link(rel)
+          b = block_given? ? Proc.new : Proc.new { true }
+          rules.add_link(rel, b)
         end
+
+        def embed(name)
+          b = block_given? ? Proc.new : Proc.new { true }
+          rules.add_embed(name, b)
+        end
+
+        def rules
+          @rules ||= Rules.new
+        end
+
       end
 
       def self.included(mod)
@@ -34,15 +87,15 @@ module HALDecorator
       end
 
       def attribute?(name)
-        run self.class.rules&.dig(:attributes, name)
+        run self.class.rules.attribute_rule_for(name)
       end
 
       def link?(rel)
-        run self.class.rules&.dig(:links, rel)
+        run self.class.rules.link_rule_for(rel)
       end
 
       def embed?(name)
-        run self.class.rules&.dig(:embeds, name)
+        run self.class.rules.embed_rule_for(name)
       end
 
       private
@@ -50,7 +103,6 @@ module HALDecorator
       attr_reader :current_user, :resource
 
       def run(block)
-        return false unless block && block.respond_to?(:call)
         instance_eval(&block) && true || false
       end
 
