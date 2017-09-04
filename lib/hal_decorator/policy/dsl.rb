@@ -56,19 +56,19 @@ module HALDecorator
           rules.defaults(*types, value: true)
         end
 
-        def attribute(name)
+        def attribute(*names)
           b = block_given? ? Proc.new : Proc.new { true }
-          rules.add_attribute(name, b)
+          names.each { |name| rules.add_attribute(name, b) }
         end
 
-        def link(rel)
+        def link(*rels)
           b = block_given? ? Proc.new : Proc.new { true }
-          rules.add_link(rel, b)
+          rels.each { |rel| rules.add_link(rel, b) }
         end
 
-        def embed(name)
+        def embed(*names)
           b = block_given? ? Proc.new : Proc.new { true }
-          rules.add_embed(name, b)
+          names.each { |name| rules.add_embed(name, b) }
         end
 
         def rules

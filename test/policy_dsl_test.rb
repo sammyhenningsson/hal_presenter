@@ -4,7 +4,12 @@ require 'ostruct'
 class PolicyDSLTest < ActiveSupport::TestCase
 
   def setup
-    @policy = Class.new { include HALDecorator::Policy::DSL }
+    @policy = Class.new do
+      include HALDecorator::Policy::DSL
+      def default(current_user)
+        current_user&.name == 'bengt'
+      end
+    end
     @user = OpenStruct.new(name: 'bengt')
     @resource = OpenStruct.new(title: 'hello')
   end
@@ -61,5 +66,25 @@ class PolicyDSLTest < ActiveSupport::TestCase
     policy = @policy.new(@user, @resource)
     assert_equal true, policy.embed?(:parent)
     assert_equal false, policy.embed?(:child)
+  end
+
+  test 'multiple' do
+    @policy.attribute :name, :password do
+      default(current_user)
+    end
+
+    @policy.link :self, :edit do
+      default(current_user)
+    end
+
+    @policy.embed :child1, :child2
+
+    policy = @policy.new(@user, @resource)
+    assert_equal true, policy.attribute?(:name)
+    assert_equal true, policy.attribute?(:password)
+    assert_equal true, policy.link?(:self)
+    assert_equal true, policy.link?(:edit)
+    assert_equal true, policy.embed?(:child1)
+    assert_equal true, policy.embed?(:child2)
   end
 end
