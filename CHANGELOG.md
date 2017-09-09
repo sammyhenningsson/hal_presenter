@@ -1,3 +1,5 @@
+## 0.3.3 / 2017-09-10
+ * Declare multiple attributes, links or embeds with the same rule in HALDecorator::Policy::DSL.
 ## 0.3.2 / 2017-09-03
  * Allow properties without specifying a block in HALDecorator::Policy::DSL.
  * Added `allow_by_default` to HALDecorator::Policy::DSL.
