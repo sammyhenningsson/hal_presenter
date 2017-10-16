@@ -1,5 +1,9 @@
 # HALDecorator
-HALDecorator is a DSL for creating serializers conforming to [JSON HAL](http://stateless.co/hal_specification.html).
+HALDecorator is a DSL for creating serializers conforming to [JSON HAL](http://stateless.co/hal_specification.html). This DSL is highly influenced by ActiveModelSerializers. My first attempted was actually to create a HAL adapter for ActiveModelSerializers. After messing around with that, I realized that it was just too messy and slow, so I decided to start over. This gem has no dependencies on other gems and will happily serialize instances of ActiverRecord, Sequel or simply POROs (most examples here will use instances of `OpenStruct` as the resource to be serialized).  
+I've done some simple benchmarks against using an ActiveModelSerializers adapter and HAL and its about 5 times faster (read this with a grain of salt, I might have missed some optimizations in my adapter).  
+So, generating some json from an object, whats the big deal? Well if your API is not driven by hypermedia and your payloads most of the time just looks the same, then this might be overkill. But if you do have dynamic payloads (e.g the payload attributes and links depend on the context) then this gem greatly simplifies serialization and puts all the serialization logic in one place.
+This documentation might be a bit long and dull, but skim through it and check out the examples. I think you'll get the hang of it.  
+
 ## Installation
 ```sh
 gem install hal_decorator
@@ -38,7 +42,7 @@ class PostSerializer
   model Post
 end
 ```
-This make it possible to serialize an instance of Post using the PostSerializer.
+This make it possible to serialize instances of Post using the PostSerializer.
 ``` ruby
 post = Post.new(*args)
 HALDecorator.to_hal(post)
@@ -51,7 +55,7 @@ The serializer class may also be specified as an option, using the `:decorator` 
 ``` ruby
 HALDecorator.to_hal(post, {decorator: PostSerializer})
 ```
-Even though the `model` class method is optional, it is very useful if the serializer should be selected dynamically and when the serializer is  used for deserialization.
+Even though the `model` class method is optional, it is very useful if the serializer should be selected dynamically and when the serializer is used for deserialization.
 
 ### policy
 The `policy` class method is used to register a poliy class that should be used during serialization. The purpose of using a policy class is to exclude properties from being serialized. Using polices is not required, but its a nice way to structure rules about what should be shown and what actions (links) are possible to perform on a resource. The latter is usually tightly coupled with authorization in controllers. This means we can create polices with a bunch of rules and use the same policy in both serialization and in controllers. This plays very nicely with gems like [Pundit](https://github.com/elabs/pundit).
@@ -62,7 +66,7 @@ Instances of the class registered with this method needs to respond to the follo
 - [`embed?(name)`]  
 Additional methods will be needed for authorization in controller. Such as `create?`, `update?` etc when using Pundit.
 A policy instance will be instantiated with the resource being serialized and the option `:current_user` passed to to_hal. For each attribute being serialized a call to `policy_instance.attribute?(name)` will be made. If that call returns `true` then the attribute will be serialized. Else it will not end up in the serialized payload. Same goes for links and embedded resources. Note that `link?(rel)` is used to discard both normal links and curies.
-Using the following Policy would discard everthing execpt a title attribute, the self link and embedded resources named foo.
+Using the following Policy would discard everything except a title attribute, the self link and embedded resources named foo.
 ``` ruby
 class SomePolicy
   def initialize(current_user, resource)
@@ -220,7 +224,7 @@ PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 ```
 
 #### blocks passed to attribute, link, curie and embed
-Blocks passes to `attribute`, `link`, `curie` and `embed` have access to the resource being serialized througth the `resource` method. These blocks also have access to an optional options hash that can be passed to `to_hal`.
+Blocks passes to `attribute`, `link`, `curie` and `embed` have access to the resource being serialized throught the `resource` method. These blocks also have access to an optional options hash that can be passed to `to_hal`.
 ``` ruby
 class PostSerializer
   extend HALDecorator
@@ -244,7 +248,7 @@ post = OpenStruct.new(id: 5, title: "hello")
 PostSerializer.to_hal(post)   # => {"title":"Common stuff -- hello"}
 ```
 Note: this does not mean that `self` inside the block is the serializer class. The access to the serializer class methods is done by delegation.  
-If the block passed to `attribute` returns nil then the serialized value will be `null`. If the block passed to link, curie or embed returns nil, then the corresponding property will not be serialized.
+If the block passed to `attribute` returns `nil` then the serialized value will be `null`. If the block passed to link, curie or embed returns `nil`, then the corresponding property will not be serialized.
 ``` ruby
 class PostSerializer
   extend HALDecorator
@@ -632,16 +636,16 @@ PostSerializer.to_hal   # => {"_links": {"self": {"href": "https://localhost:300
 ```
 ## Policy DSL
 HALDecorator includes a DSL for creating polices. By including `HALDecorator::Policy::DSL` into your policy class you get the following class methods:
-- `attribute(name, &block)`
-- `link(rel, &block)`
-- `embed(name, &block)`  
-These methods all work the same way and creates a rule named `name` (`rel` for links). If the block evaluates to `true` then the corresponding attribute, link, embedded resource will be serialized. Otherwise it will not be serialized. The block has access to the current user and the resource that should be serialized from the methods `current_user` resp. `resource`.
+- `attribute(*names, &block)`
+- `link(*rels, &block)`
+- `embed(*names, &block)`  
+These methods all work the same way and creates one or more rules for each `name` argument (`rel` for links). If the block evaluates to `true` then the corresponding attribute, link, embedded resource will be serialized. Otherwise it will not be serialized. The block has access to the current user and the resource that should be serialized from the methods `current_user` resp. `resource`.
 ```ruby
 class UserPolicy
   include HALDecorator::Policy::DSL
 
-  attribute :name do
-    #show name if user is logged in
+  attribute :name, :email do
+    # show name and email attributes if user is logged in
     !current_user.nil?
   end
   
