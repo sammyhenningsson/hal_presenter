@@ -26,6 +26,10 @@ module HALDecorator
       @_parameters ||= init_collection_params
     end
 
+    def can_serialize_collection?
+      !collection_parameters.nil?
+    end
+
     private
 
     def init_collection_params

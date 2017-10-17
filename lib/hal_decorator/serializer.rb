@@ -28,20 +28,13 @@ module HALDecorator
     end
 
     def to_collection(resources = [], options = {})
-      parameters = collection_parameters
-      if parameters.nil?
+      unless can_serialize_collection?
         raise Error,
           "Trying to serialize a collection using #{self} which has no collection info. " \
           "Add a 'collection' spec to the serializer or use another serializer"
       end
-      links = parameters.links
-      curies = parameters.curies
-      serialized = _serialize_attributes(parameters.attributes, resources, nil, options)
-      serialized.merge! _serialize_links(links, curies, resources, nil, options)
-
-      serialized_resources = resources.map { |resource| to_hash(resource, options) }
-      serialized[:_embedded] = { parameters.name => serialized_resources }
-      JSON.generate(serialized)
+      hash = to_collection_hash(resources, options)
+      JSON.generate(hash)
     end
 
     protected
@@ -55,6 +48,19 @@ module HALDecorator
         serialized.merge! serialize_embedded(resource, policy, options)
 
         run_post_serialize_hook!(resource, options, serialized)
+      end
+    end
+
+    def to_collection_hash(resources, options)
+      parameters = collection_parameters
+      links = parameters.links
+      curies = parameters.curies
+      {}.tap do |serialized|
+        serialized.merge!  _serialize_attributes(parameters.attributes, resources, nil, options)
+        serialized.merge! _serialize_links(links, curies, resources, nil, options)
+
+        serialized_resources = resources.map { |resource| to_hash(resource, options) }
+        serialized[:_embedded] = { parameters.name => serialized_resources }
       end
     end
 
@@ -121,10 +127,7 @@ module HALDecorator
         decorator = embed.decorator_class
         hash[embed.name] = 
           if resource.respond_to? :each
-            decorator ||= HALDecorator.lookup_decorator(resource.first).first
-            resource.map do |resrc|
-              decorator.to_hash(resrc, options)
-            end
+            _serialize_embedded_collection(resource, decorator, options)
           else
             decorator ||= HALDecorator.lookup_decorator(resource).first
             decorator.to_hash(resource, options)
@@ -132,6 +135,23 @@ module HALDecorator
       end
       return {} if serialized.empty?
       { _embedded: serialized }
+    end
+
+    def _serialize_embedded_collection(resources, decorator, options)
+      clazz = resources.first.class
+      decorator ||= HALDecorator.lookup_decorator(clazz)&.first
+      if decorator.nil?
+        raise Serializer::Error,
+          "No decorator specified to handle serializing embedded #{clazz}"
+      end
+      if decorator.respond_to?(:can_serialize_collection?, true) &&
+          decorator.can_serialize_collection?
+        decorator.to_collection_hash(resources, options)
+      else
+        resources.map do |resrc|
+          decorator.to_hash(resrc, options)
+        end
+      end
     end
   end
 end

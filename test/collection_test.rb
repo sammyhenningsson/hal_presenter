@@ -87,6 +87,33 @@ class CollectionTest < ActiveSupport::TestCase
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
+  test 'collections can be embedded' do
+    Parent = Struct.new(:id, :items)
+
+    parent_decorator = Class.new do
+      extend HALDecorator
+      attribute :id
+      embed :items, decorator_class: CollectionDecorator
+    end
+
+    id = 5
+    parent = Parent.new(id, @items)
+
+    expected = {
+      id: id,
+      _embedded: {
+        items: @expected
+      }
+    }
+
+    parent_decorator.to_hal(parent).tap do |payload|
+      assert_sameish_hash(
+        expected,
+        JSON.parse(payload)
+      )
+    end
+  end
+
   test 'to_collection raises execption when no collection_parameters' do
     class DecoratorWithoutCollection
       extend HALDecorator
@@ -136,10 +163,6 @@ class CollectionTest < ActiveSupport::TestCase
   test 'inheritance of collection' do
     SubItem = Struct.new(:id, :title, :data)
 
-    items = (1..3).map do |i|
-      SubItem.new(i, "title#{i}", "data#{i}")
-    end
-
     decorator_a = Class.new(CollectionDecorator) do
       model SubItem
     end
@@ -154,14 +177,14 @@ class CollectionTest < ActiveSupport::TestCase
       end
     end
 
-    decorator_a.to_collection(items).tap do |payload|
+    decorator_a.to_collection(@items).tap do |payload|
       assert_sameish_hash(
         @expected,
         JSON.parse(payload)
       )
     end
 
-    decorator_b.to_collection(items).tap do |payload|
+    decorator_b.to_collection(@items).tap do |payload|
       expected = @expected
       expected[:_embedded][:entries] = expected[:_embedded].delete(:items)
       assert_sameish_hash(
