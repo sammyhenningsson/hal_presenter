@@ -42,7 +42,7 @@ class PostSerializer
   model Post
 end
 ```
-This make it possible to serialize instances of Post using the PostSerializer.
+This make it possible to serialize Post instances using the PostSerializer.
 ``` ruby
 post = Post.new(*args)
 HALDecorator.to_hal(post)
@@ -60,10 +60,10 @@ Even though the `model` class method is optional, it is very useful if the seria
 ### policy
 The `policy` class method is used to register a poliy class that should be used during serialization. The purpose of using a policy class is to exclude properties from being serialized. Using polices is not required, but its a nice way to structure rules about what should be shown and what actions (links) are possible to perform on a resource. The latter is usually tightly coupled with authorization in controllers. This means we can create polices with a bunch of rules and use the same policy in both serialization and in controllers. This plays very nicely with gems like [Pundit](https://github.com/elabs/pundit).
 Instances of the class registered with this method needs to respond to the following methods:
-- [`initialize(current_user, resource`]
-- [`attribute?(name)`]
-- [`link?(rel)`]
-- [`embed?(name)`]  
+- `initialize(current_user, resource`
+- `attribute?(name)`
+- `link?(rel)`
+- `embed?(name)`  
 Additional methods will be needed for authorization in controller. Such as `create?`, `update?` etc when using Pundit.
 A policy instance will be instantiated with the resource being serialized and the option `:current_user` passed to to_hal. For each attribute being serialized a call to `policy_instance.attribute?(name)` will be made. If that call returns `true` then the attribute will be serialized. Else it will not end up in the serialized payload. Same goes for links and embedded resources. Note that `link?(rel)` is used to discard both normal links and curies.
 Using the following Policy would discard everything except a title attribute, the self link and embedded resources named foo.
@@ -281,7 +281,7 @@ list = (1..2).map do |i|
 end
 PostSerializer.to_collection(list)   # => {"_embedded":{"posts":[{"id":1,"title":"hello1"},{"id":2,"title":"hello2"}]}}
 ```
-The `collection` class method takes an optional block. The purpose of this block is to be able to set properties and links on the serialized collection. Note this block does not have the same access as blocks passed to `attribute`, `link`, `curie` and `embed`.
+The `collection` class method takes an optional block. The purpose of this block is to be able to set properties and links on the serialized collection. Note this block does not run in the same scope as blocks passed to `attribute`, `link`, `curie` and `embed`.
 ``` ruby
 class PostSerializer
   extend HALDecorator
