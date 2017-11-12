@@ -281,7 +281,7 @@ list = (1..2).map do |i|
 end
 PostSerializer.to_collection(list)   # => {"_embedded":{"posts":[{"id":1,"title":"hello1"},{"id":2,"title":"hello2"}]}}
 ```
-The `collection` class method takes an optional block. The purpose of this block is to be able to set properties and links on the serialized collection. Note this block does not run in the same scope as blocks passed to `attribute`, `link`, `curie` and `embed`.
+The `collection` class method takes an optional block. The purpose of this block is to be able to set properties and links on the serialized collection. Note: this block does not run in the same scope as blocks passed to `attribute`, `link`, `curie` and `embed`.
 ``` ruby
 class PostSerializer
   extend HALDecorator
@@ -325,7 +325,7 @@ The response above with some newlines.
             "href": "/posts?page=1"
         }
     },
-    "count": 2
+    "number_of_posts": 2
 }
 ```
 Note: the block given to the `:number_of_posts` attribute is using the method `resources`. This is just and alias for `resource` which looks better inside collections. 
