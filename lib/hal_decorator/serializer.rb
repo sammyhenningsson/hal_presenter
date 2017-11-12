@@ -1,4 +1,5 @@
 require 'json'
+require 'hal_decorator/pagination'
 
 module HALDecorator
 
@@ -33,6 +34,7 @@ module HALDecorator
           "Trying to serialize a collection using #{self} which has no collection info. " \
           "Add a 'collection' spec to the serializer or use another serializer"
       end
+      options[:paginate] = HALDecorator.paginate unless options.key? :paginate
       hash = to_collection_hash(resources, options)
       JSON.generate(hash)
     end
@@ -58,6 +60,7 @@ module HALDecorator
       {}.tap do |serialized|
         serialized.merge!  _serialize_attributes(parameters.attributes, resources, nil, options)
         serialized.merge! _serialize_links(links, curies, resources, nil, options)
+        Pagination.paginate!(serialized, resources) if options[:paginate]
 
         serialized_resources = resources.map { |resource| to_hash(resource, options) }
         serialized[:_embedded] = { parameters.name => serialized_resources }
