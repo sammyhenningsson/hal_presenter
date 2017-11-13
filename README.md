@@ -1,5 +1,5 @@
 # HALDecorator
-HALDecorator is a DSL for creating serializers conforming to [JSON HAL](http://stateless.co/hal_specification.html). This DSL is highly influenced by ActiveModelSerializers. My first attempted was actually to create a HAL adapter for ActiveModelSerializers. After messing around with that, I realized that it was just too messy and slow, so I decided to start over. This gem has no dependencies on other gems and will happily serialize instances of ActiverRecord, Sequel or simply POROs (most examples here will use instances of `OpenStruct` as the resource to be serialized).  
+HALDecorator is a DSL for creating serializers conforming to [JSON HAL](http://stateless.co/hal_specification.html). This DSL is highly influenced by ActiveModelSerializers. My first attempted was actually to create a HAL adapter for ActiveModelSerializers. After messing around with that, I realized that it was just too messy and slow, so I decided to start over. This gem has no dependencies on other gems and will happily serialize instances of ActiveRecord, Sequel or simply POROs (most examples here will use instances of `OpenStruct` as the resource to be serialized).  
 I've done some simple benchmarks against using an ActiveModelSerializers adapter and HAL and its about 5 times faster (read this with a grain of salt, I might have missed some optimizations in my adapter).  
 So, generating some json from an object, whats the big deal? Well if your API is not driven by hypermedia and your payloads most of the time just looks the same, then this might be overkill. But if you do have dynamic payloads (e.g the payload attributes and links depend on the context) then this gem greatly simplifies serialization and puts all the serialization logic in one place.
 This documentation might be a bit long and dull, but skim through it and check out the examples. I think you'll get the hang of it.  
@@ -35,7 +35,7 @@ Serializers are defined by extending `HALDecorator` in the begining of the class
 - [`from_hal(payload, resource = nil)`](#from_hal)
 
 ### model
-The `model` class method is used to register the resource Class that this serializer handles.
+The `model` class method is used to register the resource Class that this serializer handles. (Theres no Rails magic that automagically maps models to serializers.)
 ``` ruby
 class PostSerializer
   extend HALDecorator
