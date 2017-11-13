@@ -104,5 +104,29 @@ class PaginationTest < ActiveSupport::TestCase
     assert_nil payload.dig(:_links, :next)
     assert_nil payload.dig(:_links, :prev)
   end
+
+  test 'no pagination if next/prev links already present' do
+    @serializer.collection of: 'items' do
+      link :self, '/the/collection'
+      link :next, "some/uri"
+    end
+    collection = PaginatableCollection.new(7, current_page: 2, page_size: 3)
+    payload = @serializer.to_collection(collection)
+    payload = JSON.parse(payload, symbolize_names: true)
+    assert payload.dig(:_links, :self)
+    assert_equal "/the/collection?page=1&per_page=3", payload.dig(:_links, :prev, :href)
+    assert_equal "some/uri", payload.dig(:_links, :next, :href)
+  end
+
+  test 'existing query parameters are kept' do
+    @serializer.collection of: 'items' do
+      link :self, '/the/collection?foo=bar'
+    end
+    collection = PaginatableCollection.new(7, current_page: 2, page_size: 3)
+    payload = @serializer.to_collection(collection)
+    payload = JSON.parse(payload, symbolize_names: true)
+    assert_equal "/the/collection?foo=bar&page=1&per_page=3", payload.dig(:_links, :prev, :href)
+    assert_equal "/the/collection?foo=bar&page=3&per_page=3", payload.dig(:_links, :next, :href)
+  end
 end
 
