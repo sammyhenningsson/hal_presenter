@@ -58,14 +58,15 @@ HALDecorator.to_hal(post, {decorator: PostSerializer})
 Even though the `model` class method is optional, it is very useful if the serializer should be selected dynamically and when the serializer is used for deserialization.
 
 ### policy
-The `policy` class method is used to register a poliy class that should be used during serialization. The purpose of using a policy class is to exclude properties from being serialized. Using polices is not required, but its a nice way to structure rules about what should be shown and what actions (links) are possible to perform on a resource. The latter is usually tightly coupled with authorization in controllers. This means we can create polices with a bunch of rules and use the same policy in both serialization and in controllers. This plays very nicely with gems like [Pundit](https://github.com/elabs/pundit).
+The `policy` class method is used to register a poliy class that should be used during serialization. The purpose of using a policy class is to exclude properties from being serialized depending on the context. E.g hide some attributes/link if current_user is not an admin.  
+Using polices is not required, but its a nice way to structure rules about what should be shown and what actions (links) are possible to perform on a resource. The latter is usually tightly coupled with authorization in controllers. This means we can create polices with a bunch of rules and use the same policy in both serialization and in controllers. This plays very nicely with gems like [Pundit](https://github.com/elabs/pundit).
 Instances of the class registered with this method needs to respond to the following methods:
-- `initialize(current_user, resource`
+- `initialize(current_user, resource)`
 - `attribute?(name)`
 - `link?(rel)`
 - `embed?(name)`  
 Additional methods will be needed for authorization in controller. Such as `create?`, `update?` etc when using Pundit.
-A policy instance will be instantiated with the resource being serialized and the option `:current_user` passed to to_hal. For each attribute being serialized a call to `policy_instance.attribute?(name)` will be made. If that call returns `true` then the attribute will be serialized. Else it will not end up in the serialized payload. Same goes for links and embedded resources. Note that `link?(rel)` is used to discard both normal links and curies.
+A policy instance will be instantiated with the resource being serialized and the option `:current_user` passed to `to_hal`. For each attribute being serialized a call to `policy_instance.attribute?(name)` will be made. If that call returns `true` then the attribute will be serialized. Else it will not end up in the serialized payload. Same goes for links and embedded resources. Note that `link?(rel)` is used to discard both normal links and curies.
 Using the following Policy would discard everything except a title attribute, the self link and embedded resources named foo.
 ``` ruby
 class SomePolicy
@@ -224,7 +225,7 @@ PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 ```
 
 #### blocks passed to attribute, link, curie and embed
-Blocks passes to `attribute`, `link`, `curie` and `embed` have access to the resource being serialized throught the `resource` method. These blocks also have access to an optional options hash that can be passed to `to_hal`.
+Blocks passes to `attribute`, `link`, `curie` and `embed` have access to the resource being serialized throught the `resource` method. These blocks also have access to an optional `options` hash that can be passed to `to_hal`.
 ``` ruby
 class PostSerializer
   extend HALDecorator
@@ -235,7 +236,7 @@ end
 post = OpenStruct.new(id: 5, title: "hello")
 PostSerializer.to_hal(post, {extra: 'world'})   # => {"title": "5 -- hello -- world"}
 ```
-These blocks also have acces to the scope where the block was created (e.g. the Serializer class)
+These blocks also have access to the scope where the block was created (e.g. the Serializer class)
 ``` ruby
 class PostSerializer
   extend HALDecorator
