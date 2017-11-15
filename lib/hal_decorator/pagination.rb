@@ -99,20 +99,27 @@ module HALDecorator
       }
     end
 
+    # Supported by Sequel and Kaminari
     def current_page
       collection.respond_to?(:current_page) && collection.current_page
     end
 
+    # Supported by Sequel and Kaminari
     def prev_page
       collection.respond_to?(:prev_page) && collection.prev_page
     end
 
+    # Supported by Sequel and Kaminari
     def next_page
       collection.respond_to?(:next_page) && collection.next_page
     end
 
     def per_page
-      collection.respond_to?(:page_size) && collection.page_size
+      if collection.respond_to?(:page_size)
+        collection.page_size # Supported by Sequel
+      elsif collection.respond_to?(:max_per_page)
+        collection.max_per_page # Supported by Kaminari
+      end
     end
   end
 end
