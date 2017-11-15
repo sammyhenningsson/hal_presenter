@@ -24,4 +24,5 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency "minitest", '~> 5.10', '>= 5.0'
   gem.add_development_dependency "byebug", '~> 9.0', '>= 9.0'
   gem.add_development_dependency "kaminari", '~> 1.1', '>= 1.1.1'
+  gem.add_development_dependency "will_paginate", '~> 3.1', '>= 3.1.6'
 end

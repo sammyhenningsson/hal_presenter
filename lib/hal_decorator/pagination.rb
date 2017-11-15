@@ -84,32 +84,30 @@ module HALDecorator
     end
 
     def add_prev_link
-      return unless prev_page
-      return if serialized[:_links][:prev]
+      return if serialized[:_links][:prev] || !prev_page
       serialized[:_links][:prev] = {
         href: (self_uri + query(prev_page)).to_s
       }
     end
 
     def add_next_link
-      return unless next_page
-      return if serialized[:_links][:next]
+      return if serialized[:_links][:next] || !next_page
       serialized[:_links][:next] = {
         href: (self_uri + query(next_page)).to_s
       }
     end
 
-    # Supported by Sequel and Kaminari
+    # Supported by Sequel, Kaminari and will_paginate
     def current_page
       collection.respond_to?(:current_page) && collection.current_page
     end
 
-    # Supported by Sequel and Kaminari
     def prev_page
-      collection.respond_to?(:prev_page) && collection.prev_page
+      return collection.prev_page if collection.respond_to?(:prev_page) # Sequel and Kaminari
+      return collection.previous_page if collection.respond_to?(:previous_page) # will_paginate
     end
 
-    # Supported by Sequel and Kaminari
+    # Supported by Sequel, Kaminari and will_paginate
     def next_page
       collection.respond_to?(:next_page) && collection.next_page
     end
@@ -119,6 +117,8 @@ module HALDecorator
         collection.page_size # Supported by Sequel
       elsif collection.respond_to?(:max_per_page)
         collection.max_per_page # Supported by Kaminari
+      elsif collection.respond_to?(:per_page)
+        collection.per_page # Supported by will_paginate
       end
     end
   end

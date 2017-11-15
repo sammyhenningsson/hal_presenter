@@ -1,6 +1,7 @@
 require 'test_helper'
 require 'ostruct'
 require 'kaminari/core'
+require 'will_paginate/collection'
 
 class PaginatableCollection
   include Enumerable
@@ -101,6 +102,17 @@ class PaginationTest < ActiveSupport::TestCase
     Kaminari.config.max_per_page = 3
     items = 9.times.map { |n| OpenStruct.new(id: n + 1) }
     collection = Kaminari::PaginatableArray.new(items, limit: 3, offset: 3)
+    payload = @serializer.to_collection(collection)
+    assert_sameish_hash(
+      expected(2, 1, 3, 3),
+      JSON.parse(payload)
+    )
+  end
+
+  test 'add prev and next from will_paginate' do
+    items = 3.times.map { |n| OpenStruct.new(id: n + 4) }
+    collection = WillPaginate::Collection.new(2, 3, 9)
+    collection.replace(items)
     payload = @serializer.to_collection(collection)
     assert_sameish_hash(
       expected(2, 1, 3, 3),
