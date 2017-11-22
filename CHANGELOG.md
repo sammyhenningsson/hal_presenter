@@ -1,3 +1,6 @@
+## 0.3.4 / 2017-11-22
+ * Support pagination.
+ * Embedded arrays will now be serialized as a collection if the serializer has a collection.
 ## 0.3.3 / 2017-09-10
  * Declare multiple attributes, links or embeds with the same rule in HALDecorator::Policy::DSL.
 ## 0.3.2 / 2017-09-03
