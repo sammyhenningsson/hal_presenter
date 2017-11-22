@@ -20,6 +20,92 @@ And then execute:
 $ bundle
 ```
 
+## Intro
+Lets start with an example. Say you have your typical blog and you want to serialize post resources. Posts have some text, an author and possibly some comments. Only the author of the post may edit or delete it. A serializer could then be written as:
+``` ruby
+class PostSerializer
+  extend HALDecorator
+  model Post
+  
+  attribute :text
+  attribute :characters do
+    resource.text.size
+  end
+  
+  link :self do
+    "/posts/#{resource.id}"
+  end
+  
+  link :author do
+    "/users/#{resource.author.id}"
+  end
+  
+  link :edit do
+    "/posts/#{resource.id}/edit" if resource.author.id == options[:current_user]
+  end
+  
+  link :delete do
+    "/posts/#{resource.id}" if resource.author.id == options[:current_user]
+  end
+  
+  embed :comments
+end
+
+```
+Then instances of Post can be serialized with `HALDecorator.to_hal(post)` which will produce the following (assuming the current user is the author of the post, else the edit/delete links would not be present):
+
+``` ruby
+{   
+    "characters": 25,
+    "text": "some very important stuff",
+    "_links": {
+        "author": {
+            "href": "/users/8"
+        },  
+        "delete": {
+            "href": "/posts/5"
+        },  
+        "edit": {
+            "href": "/posts/5/edit"
+        },  
+        "self": {
+            "href": "/posts/5"
+        }
+    },
+    "_embedded": {
+        "comments": {
+            "count": 2,
+            "_links": {
+                "self": {
+                    "href": "/posts/5/comments"
+                }
+            },
+            "_embedded": {
+                "comments": [
+                    {
+                        "comment": "lorem ipsum",
+                        "_links": { 
+                            "self": {
+                                "href": "/posts/5/comment/1"
+                            }
+                        }
+                    },
+                    {
+                        "comment": "dolor sit",
+                        "_links": { 
+                            "self": {
+                                "href": "/posts/5/comment/2"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}
+
+```
+
 ## Defining a Serializer
 Serializers are defined by extending `HALDecorator` in the begining of the class declaration. This will add the following class methods:
 - [`model(clazz)`](#model)
@@ -635,6 +721,12 @@ class PostSerializer
 end
 PostSerializer.to_hal   # => {"_links": {"self": {"href": "https://localhost:3000/posts/1"}}}
 ```
+
+### HALDecorator.paginate
+Setting `HALDecorator.paginate = true` will add next/prev links for collections when possible. Requirements for this is:
+- The resource being serialized is a paginated collection (Kaminari, will_paginate and Sequel are supported)
+- The serializer being used has a collection block which declares a self link
+
 ## Policy DSL
 HALDecorator includes a DSL for creating polices. By including `HALDecorator::Policy::DSL` into your policy class you get the following class methods:
 - `attribute(*names, &block)`
