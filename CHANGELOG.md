@@ -1,3 +1,5 @@
+## 0.3.6 / 2018-01-28
+ * Deprecate this gem and refer to HALPresenter
 ## 0.3.4 / 2017-11-22
  * Support pagination.
  * Embedded arrays will now be serialized as a collection if the serializer has a collection.
