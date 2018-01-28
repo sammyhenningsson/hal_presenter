@@ -355,7 +355,7 @@ PostSerializer.to_hal(post, {current_user: user})   # => "{"title":"hello","foo"
 ```
 
 ### collection
-The `collection` class method is used to make a serializer capable of serializing an array of resources. Serializing collections may of course be done with separate serializer, but should we want to use the same serializer class for both then `collection` will make that work. The method takes a required keyword paramter named `:of`, which will be used as the key in corresponding _\_embedded_ property. Each entry in first argument given to `to_collection` will then be serialized with this serializer.
+The `collection` class method is used to make a serializer capable of serializing an array of resources. Serializing collections may of course be done with separate serializer, but should we want to use the same serializer class for both then `collection` will make that work. The method takes a required keyword paramter named `:of`, which will be used as the key in the corresponding _\_embedded_ property. Each entry in first argument given to `to_collection` will then be serialized with this serializer.
 ``` ruby
 class PostSerializer
   extend HALPresenter
@@ -375,7 +375,7 @@ class PostSerializer
   attribute :id
   attribute :title
   collection of: 'posts' do
-    attribute :number_of_posts { resources.count }
+    attribute(:number_of_posts) { resources.count }
     link :self do
       format "/posts%s", (options[:page] && "?page=#{options[:page]}")
     end
@@ -392,27 +392,27 @@ PostSerializer.to_collection(list, {page: 1, next: 2})   # => {"number_of_posts"
 The response above with some newlines.
 ```sh
 {
-    "_embedded": {
-        "posts": [
-            {
-                "id": 1,
-                "title": "hello1"
-            },
-            {
-                "id": 2,
-                "title": "hello2"
-            }
-        ]
+  "number_of_posts": 2,
+  "_links": {
+    "self": {
+      "href": "/posts?page=1"
     },
-    "_links": {
-        "next": {
-            "href": "/posts?page=2"
-        },
-        "self": {
-            "href": "/posts?page=1"
-        }
-    },
-    "number_of_posts": 2
+    "next": {
+      "href": "/posts?page=2"
+    }
+  },
+  "_embedded": {
+    "posts": [
+      {
+        "id": 1,
+        "title": "hello1"
+      },
+      {
+        "id": 2,
+        "title": "hello2"
+      }
+    ]
+  }
 }
 ```
 Note: the block given to the `:number_of_posts` attribute is using the method `resources`. This is just and alias for `resource` which looks better inside collections. 
@@ -464,27 +464,27 @@ The `post_serialize` class method can used to run a hook after each serializatio
     model Form
 
     attribute :method do
-      (options[:method] || resource&.method || 'POST').to_s.upcase
+      (resource&.method || 'POST').to_s.upcase
     end
 
     attribute :name do
-      options[:name] || resource&.name
+      resource&.name
     end
 
     attribute :title do
-      options[:title] || resource&.title
+      resource&.title
     end
 
     attribute :href do
-      options[:href] || resource&.href
+      resource&.href
     end
 
     attribute :type do
-      options[:type] || resource&.type
+      resource&.type
     end
 
     link :self do
-      options[:self_link] || resource&.self_link
+      resource&.self_link
     end
 
     post_serialize do |hash|
@@ -498,7 +498,7 @@ The `post_serialize` class method can used to run a hook after each serializatio
     end
   end
 ```
-Now this setup can be used to serialize different kinds of forms.
+Now this setup can be used to serialize different kinds of resources with a single serializer.
 ```ruby
 fields = {
   email: { type: "string"},
@@ -591,9 +591,9 @@ post.title                               # => "hello"
 post.author.name                         # => "bengt"
 
 ```
-Instances are created by calling `new` on the class registered by `model` without any arguments. Then each attribute is set with `#_attribute\_name_=` (e.g.
+Instances are created by calling `new` on the class registered by `model` without any arguments. Then each attribute is set with *`#attribute_name=`* (e.g.
 `post.title = 'hello'`)
-Thus, all models used for deserialization must respond to `_attribute\_name_=` for all attributes used in the serializer.  
+Thus, all models used for deserialization must respond to *`attribute_name=`* for all attributes used in the serializer.  
 If the model can't be created without arguments (or if the instance already exit), then the instance can be passed to `from_hal`.
 ```ruby
 class User
@@ -732,7 +732,7 @@ HALPresenter includes a DSL for creating polices. By including `HALPresenter::Po
 - `attribute(*names, &block)`
 - `link(*rels, &block)`
 - `embed(*names, &block)`  
-These methods all work the same way and creates one or more rules for each `name` argument (`rel` for links). If no block is given then the corresponding attribute/link/embed will always be serialized. If the block evaluates to `true` then the corresponding attribute, link, embedded resource will be serialized. Otherwise it will not be serialized. The block has access to the current user and the resource that should be serialized from the methods `current_user` resp. `resource`.
+These methods all work the same way and creates one or more rules for each `name` argument (`rel` for links). If no block is given then the corresponding attribute/link/embedded resource will always be serialized. If the block evaluates to `true` then the attribute/link/embedded resource will be serialized. Otherwise it will not be serialized. The block has access to the current user, the resource that is being serialized, as well as any options passed to `to_hal` from the methods `current_user`, `resource` resp. `options`.
 ```ruby
 class UserPolicy
   include HALPresenter::Policy::DSL
@@ -765,4 +765,4 @@ class UserPolicy
     current_user && resource.user.id == current_user.id
   end
 ```
-Notice the instance method `#edit?` which is typically used by [Pundit](https://github.com/elabs/pundit). That method is called from the block belonging to the rule for the edit link. This means that we can use the same policy class both for serialization and for authorization (and have the rules in one place). This is great since we should only provide links to actions that are possible/authorized and we don't want to sync this between controller code and serialization code.
+Notice the instance method `#edit?` which is typically used by [Pundit](https://github.com/elabs/pundit). That method is called from the block belonging to the rule for the edit link. This means that we can use the same policy class both for serialization and for authorization (and have all the rules in one place). This is great since we should only provide links to actions that are possible (authorized) and we don't want to sync this between controller code and serialization code.
