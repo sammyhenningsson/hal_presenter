@@ -173,7 +173,7 @@ class SomePolicy
 end
 
 ```
-This gem includes a DSL that simplifies creating policies. See [`HALDecorator::Policy::DSL`](#Policy-DSL).
+This gem includes a DSL that simplifies creating policies. See [`HALDecorator::Policy::DSL`](#policy-dsl).
 
 ### attribute
 The `attribute` class method specifies an attribute (property) to be serialized. The first argument, `name`, is required and must be a symbol of the attribute name. When `attribute` is called with only one argument, the resources being serialized are expected to respond to that argument and the returned value is what ends up in the payload.
@@ -732,12 +732,14 @@ HALDecorator includes a DSL for creating polices. By including `HALDecorator::Po
 - `attribute(*names, &block)`
 - `link(*rels, &block)`
 - `embed(*names, &block)`  
-These methods all work the same way and creates one or more rules for each `name` argument (`rel` for links). If the block evaluates to `true` then the corresponding attribute, link, embedded resource will be serialized. Otherwise it will not be serialized. The block has access to the current user and the resource that should be serialized from the methods `current_user` resp. `resource`.
+These methods all work the same way and creates one or more rules for each `name` argument (`rel` for links). If no block is given then the corresponding attribute/link/embed will always be serialized. If the block evaluates to `true` then the corresponding attribute, link, embedded resource will be serialized. Otherwise it will not be serialized. The block has access to the current user and the resource that should be serialized from the methods `current_user` resp. `resource`.
 ```ruby
 class UserPolicy
   include HALDecorator::Policy::DSL
 
-  attribute :name, :email do
+  attribute :first_name, last_name
+
+  attribute :email do
     # show name and email attributes if user is logged in
     !current_user.nil?
   end
