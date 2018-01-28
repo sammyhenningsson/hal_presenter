@@ -81,9 +81,10 @@ module HALDecorator
         mod.extend(ClassMethods)
       end
 
-      def initialize(current_user = nil, resource)
+      def initialize(current_user, resource, options = {})
         @current_user = current_user
         @resource = resource
+        @options = options
       end
 
       def attribute?(name)
@@ -100,7 +101,7 @@ module HALDecorator
 
       private
 
-      attr_reader :current_user, :resource
+      attr_reader :current_user, :resource, :options
 
       def run(block)
         instance_eval(&block) && true || false

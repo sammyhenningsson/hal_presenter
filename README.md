@@ -147,7 +147,7 @@ Even though the `model` class method is optional, it is very useful if the seria
 The `policy` class method is used to register a poliy class that should be used during serialization. The purpose of using a policy class is to exclude properties from being serialized depending on the context. E.g hide some attributes/link if current_user is not an admin.  
 Using polices is not required, but its a nice way to structure rules about what should be shown and what actions (links) are possible to perform on a resource. The latter is usually tightly coupled with authorization in controllers. This means we can create polices with a bunch of rules and use the same policy in both serialization and in controllers. This plays very nicely with gems like [Pundit](https://github.com/elabs/pundit).
 Instances of the class registered with this method needs to respond to the following methods:
-- `initialize(current_user, resource)`
+- `initialize(current_user, resource, options = {})`
 - `attribute?(name)`
 - `link?(rel)`
 - `embed?(name)`  
@@ -156,7 +156,7 @@ A policy instance will be instantiated with the resource being serialized and th
 Using the following Policy would discard everything except a title attribute, the self link and embedded resources named foo.
 ``` ruby
 class SomePolicy
-  def initialize(current_user, resource)
+  def initialize(current_user, resource, options = {})
   end
   
   def attribute?(name)

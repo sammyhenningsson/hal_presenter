@@ -42,7 +42,7 @@ module HALDecorator
     protected
 
     def to_hash(resource, options)
-      policy = policy_class&.new(options[:current_user], resource)
+      policy = policy_class&.new(options[:current_user], resource, options)
 
       {}.tap do |serialized|
         serialized.merge! serialize_attributes(resource, policy, options)

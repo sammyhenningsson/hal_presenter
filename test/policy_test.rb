@@ -7,11 +7,11 @@ class PolicyTest < ActiveSupport::TestCase
   end
 
   test 'policy inheritance' do
-    p = Class.new
-    @serializer.policy p
+    some_policy = Class.new
+    @serializer.policy some_policy
 
     serializer1 = Class.new(@serializer)
-    assert_equal p, serializer1.send(:policy_class)
+    assert_equal some_policy, serializer1.send(:policy_class)
   end
 
   test 'inherited serializer can override policy' do

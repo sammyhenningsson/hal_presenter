@@ -113,7 +113,7 @@ class SerializerTest < ActiveSupport::TestCase
 
   test 'Policy is honored' do
     class Policy
-      def initialize(_, _); end
+      def initialize(*); end
 
       def attribute?(attribute)
         attribute == :title
