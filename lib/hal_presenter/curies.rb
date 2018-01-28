@@ -1,6 +1,6 @@
-require 'hal_decorator/property'
+require 'hal_presenter/property'
 
-module HALDecorator
+module HALPresenter
   module Curies
     def curie(rel, value = nil, &block)
       if value.nil? && !block_given?

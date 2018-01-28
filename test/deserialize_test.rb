@@ -7,23 +7,23 @@ class DeserializerTest < ActiveSupport::TestCase
   Model = Struct.new(:title, :comment, :other, :parent, :children)
   Association = Struct.new(:title)
 
-  class AssociationDecorator
-    extend HALDecorator
+  class AssociationPresenter
+    extend HALPresenter
     model Association
 
     attribute :title
   end
 
-  class Decorator
-    extend HALDecorator
+  class Presenter
+    extend HALPresenter
     model Model
 
     attribute :title
     attribute :comment
     attribute :extra
 
-    embed :parent, decorator_class: AssociationDecorator
-    embed :children, decorator_class: AssociationDecorator
+    embed :parent, presenter_class: AssociationPresenter
+    embed :children, presenter_class: AssociationPresenter
   end
 
   def setup
@@ -49,8 +49,8 @@ class DeserializerTest < ActiveSupport::TestCase
     })
   end
 
-  test 'HALDecorator.from_hal' do
-    resource = HALDecorator.from_hal(Decorator, @json)
+  test 'HALPresenter.from_hal' do
+    resource = HALPresenter.from_hal(Presenter, @json)
     assert resource
     assert_equal Model, resource.class
     assert_equal 'very good', resource.comment
@@ -63,8 +63,8 @@ class DeserializerTest < ActiveSupport::TestCase
     assert_equal 'child2', resource.children[1].title
   end
 
-  test 'Decorator.from_hal' do
-    resource = Decorator.from_hal(@json)
+  test 'Presenter.from_hal' do
+    resource = Presenter.from_hal(@json)
     assert resource
     assert_instance_of Model, resource
     assert_equal 'very good', resource.comment
@@ -77,7 +77,7 @@ class DeserializerTest < ActiveSupport::TestCase
       nil,
       OpenStruct.new(title: 'to_be_changed')
     )
-    Decorator.from_hal(@json, resource)
+    Presenter.from_hal(@json, resource)
     assert resource
     assert_instance_of Model, resource
     assert_equal 'very good', resource.comment
@@ -87,7 +87,7 @@ class DeserializerTest < ActiveSupport::TestCase
   end
 
   test 'empty payload returns nil' do
-    assert_nil Decorator.from_hal(nil)
-    assert_nil Decorator.from_hal("")
+    assert_nil Presenter.from_hal(nil)
+    assert_nil Presenter.from_hal("")
   end
 end

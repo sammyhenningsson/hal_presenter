@@ -7,14 +7,14 @@ class DSLTest < ActiveSupport::TestCase
       from_object: 'string_from_obj'.freeze,
       from_block: 'string_from_block'.freeze
     )
-    @serializer = Class.new { extend HALDecorator }
+    @serializer = Class.new { extend HALPresenter }
   end
 
   test 'model' do
     Model = Struct.new(:title)
     @serializer.model Model
     resource = Model.new(title: 'some title')
-    assert_equal @serializer, HALDecorator.lookup_decorator(resource).first
+    assert_equal @serializer, HALPresenter.lookup_presenter(resource).first
   end
 
   test 'policy' do
@@ -26,7 +26,7 @@ class DSLTest < ActiveSupport::TestCase
   test 'attribute with value from contant' do
     @serializer.attribute :from_constant, 'some_string'.freeze
     attribute = @serializer.send(:attributes).first
-    assert_instance_of HALDecorator::Property, attribute
+    assert_instance_of HALPresenter::Property, attribute
     assert_equal :from_constant, attribute.name
     assert_equal 'some_string' , attribute.value('ignore'.freeze)
   end
@@ -34,15 +34,15 @@ class DSLTest < ActiveSupport::TestCase
   test 'attribute with value from object' do
     @serializer.attribute :from_object
     attribute = @serializer.send(:attributes).first
-    assert_instance_of HALDecorator::Property, attribute
+    assert_instance_of HALPresenter::Property, attribute
     assert_equal :from_object, attribute.name
     assert_equal 'string_from_obj', attribute.value(@obj)
   end
 
   test 'attribute with value from block' do
-    @serializer.attribute :from_block { resource.from_block }
+    @serializer.attribute(:from_block) { resource.from_block }
     attribute = @serializer.send(:attributes).first
-    assert_instance_of HALDecorator::Property, attribute
+    assert_instance_of HALPresenter::Property, attribute
     assert_equal :from_block, attribute.name
     assert_equal 'string_from_block' , attribute.value(@obj)
   end
@@ -50,23 +50,23 @@ class DSLTest < ActiveSupport::TestCase
   test 'link with value from contant' do
     @serializer.link :from_constant, 'some_string'.freeze
     link = @serializer.send(:links).last
-    assert_instance_of HALDecorator::Links::Link, link
+    assert_instance_of HALPresenter::Links::Link, link
     assert_equal :from_constant, link.name
     assert_equal 'some_string' , link.value('ignore'.freeze)
   end
 
   test 'link with value from block' do
-    @serializer.link :from_block { resource.from_block }
+    @serializer.link(:from_block) { resource.from_block }
     link = @serializer.send(:links).first
-    assert_instance_of HALDecorator::Links::Link, link
+    assert_instance_of HALPresenter::Links::Link, link
     assert_equal :from_block, link.name
     assert_equal 'string_from_block' , link.value(@obj)
   end
 
   test 'link with http method' do
-    @serializer.link :with_method, method: :put { 'resource/1/edit' }
+    @serializer.link(:with_method, method: :put) { 'resource/1/edit' }
     link = @serializer.send(:links).first
-    assert_instance_of HALDecorator::Links::Link, link
+    assert_instance_of HALPresenter::Links::Link, link
     assert_equal :with_method, link.name
     assert_equal 'resource/1/edit' , link.value(@obj)
     assert_equal :put, link.http_method
@@ -81,15 +81,15 @@ class DSLTest < ActiveSupport::TestCase
   test 'curie with value from contant' do
     @serializer.curie :from_constant, 'some_string'.freeze
     curie = @serializer.send(:curies).last
-    assert_instance_of HALDecorator::Property, curie
+    assert_instance_of HALPresenter::Property, curie
     assert_equal :from_constant, curie.name
     assert_equal 'some_string' , curie.value('ignore'.freeze)
   end
 
   test 'curie with value from block' do
-    @serializer.curie :from_block { resource.from_block }
+    @serializer.curie(:from_block) { resource.from_block }
     curie = @serializer.send(:curies).first
-    assert_instance_of HALDecorator::Property, curie
+    assert_instance_of HALPresenter::Property, curie
     assert_equal :from_block, curie.name
     assert_equal 'string_from_block' , curie.value(@obj)
   end
@@ -103,7 +103,7 @@ class DSLTest < ActiveSupport::TestCase
   test 'embed with value from contant' do
     @serializer.embed :from_constant, OpenStruct.new(title: 'from_constant').freeze
     embed = @serializer.send(:embedded).first
-    assert_instance_of HALDecorator::Embedded::Embed, embed
+    assert_instance_of HALPresenter::Embedded::Embed, embed
     assert_equal :from_constant, embed.name
     assert_instance_of OpenStruct , embed.value('ignored'.freeze)
     assert_equal 'from_constant', embed.value.title
@@ -112,7 +112,7 @@ class DSLTest < ActiveSupport::TestCase
   test 'embed with value from object' do
     @serializer.embed :from_object
     embed = @serializer.send(:embedded).first
-    assert_instance_of HALDecorator::Embedded::Embed, embed
+    assert_instance_of HALPresenter::Embedded::Embed, embed
     assert_equal :from_object, embed.name
     assert_equal 'string_from_obj', embed.value(@obj)
   end
@@ -122,21 +122,21 @@ class DSLTest < ActiveSupport::TestCase
       resource.from_block
     end
     embed = @serializer.send(:embedded).first
-    assert_instance_of HALDecorator::Embedded::Embed, embed
+    assert_instance_of HALPresenter::Embedded::Embed, embed
     assert_equal :from_block, embed.name
     assert_equal 'string_from_block' , embed.value(@obj)
   end
 
-  test 'embed with specified decorator' do
+  test 'embed with specified presenter' do
     EmbeddedSerializer = Struct.new(:name)
-    @serializer.embed :from_block, decorator_class: EmbeddedSerializer do
+    @serializer.embed :from_block, presenter_class: EmbeddedSerializer do
       {foo: 2}
     end
     embed = @serializer.send(:embedded).first
-    assert_instance_of HALDecorator::Embedded::Embed, embed
+    assert_instance_of HALPresenter::Embedded::Embed, embed
     assert_equal :from_block, embed.name
     assert_equal({foo: 2}, embed.value)
-    assert_equal EmbeddedSerializer, embed.decorator_class
+    assert_equal EmbeddedSerializer, embed.presenter_class
   end
 
   test 'collection with block' do
@@ -147,7 +147,7 @@ class DSLTest < ActiveSupport::TestCase
     end
 
     collection = @serializer.send(:collection_parameters)
-    assert_instance_of HALDecorator::Collection::CollectionParameters, collection
+    assert_instance_of HALPresenter::Collection::CollectionParameters, collection
     assert_equal 'items', collection.name
     assert_equal 1, collection.send(:attributes).size
     assert_equal 1, collection.send(:links).size
@@ -168,7 +168,7 @@ class DSLTest < ActiveSupport::TestCase
       hash[:added] = 'more'
     end
     hook = @serializer.send(:post_serialize_hook)
-    assert_instance_of HALDecorator::SerializeHooks::Hook, hook
+    assert_instance_of HALPresenter::SerializeHooks::Hook, hook
     serialized = { foo: 5 }
     hook.run(nil, nil, serialized)
     assert_equal({foo: 5, added: 'more' }, serialized)

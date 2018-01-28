@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 Gem::Specification.new do |gem|
-  gem.name        = 'hal_decorator'
-  gem.version     = '0.3.6'
+  gem.name        = 'hal_presenter'
+  gem.version     = '0.4.0'
   gem.summary     = "HAL serializer"
   gem.description = <<~EOS
                     A DSL for serializing resources according to
@@ -12,7 +12,7 @@ Gem::Specification.new do |gem|
                     EOS
   gem.authors     = ["Sammy Henningsson"]
   gem.email       = 'sammy.henningsson@gmail.com'
-  gem.homepage    = "https://github.com/sammyhenningsson/hal_decorator"
+  gem.homepage    = "https://github.com/sammyhenningsson/hal_presenter"
   gem.license     = "MIT"
 
   gem.cert_chain  = ['certs/sammyhenningsson.pem']
@@ -27,10 +27,4 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency "byebug", '~> 9.0', '>= 9.0'
   gem.add_development_dependency "kaminari", '~> 1.1', '>= 1.1.1'
   gem.add_development_dependency "will_paginate", '~> 3.1', '>= 3.1.6'
-
-  gem.post_install_message = <<-MESSAGE
-      The 'hal_decorator' gem has been deprecated and has been replaced by 'hal_presenter'.
-      See: https://rubygems.org/gems/hal_presenter
-      And: https://github.com/sammyhenningsson/hal_presenter
-  MESSAGE
 end

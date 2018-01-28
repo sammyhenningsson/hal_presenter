@@ -1,22 +1,22 @@
 require 'json'
-require 'hal_decorator/pagination'
+require 'hal_presenter/pagination'
 
-module HALDecorator
+module HALPresenter
 
   def self.to_hal(resource, options = {})
     raise Serializer::Error, "Resource is nil" if resource.nil?
-    decorator = options.delete(:decorator)
-    decorator ||= HALDecorator.lookup_decorator(resource)&.last
-    raise Serializer::Error, "No decorator for #{resource}" unless decorator
-    decorator.to_hal(resource, options)
+    presenter = options.delete(:presenter)
+    presenter ||= HALPresenter.lookup_presenter(resource)&.last
+    raise Serializer::Error, "No presenter for #{resource}" unless presenter
+    presenter.to_hal(resource, options)
   end
 
   def self.to_collection(resources, options = {})
     raise Serializer::Error, "resources is nil" if resources.nil?
-    decorator = options.delete(:decorator)
-    decorator ||= HALDecorator.lookup_decorator(resources.first)&.last
-    raise Serializer::Error, "No decorator for #{resources.first}" unless decorator
-    decorator.to_collection(resources, options)
+    presenter = options.delete(:presenter)
+    presenter ||= HALPresenter.lookup_presenter(resources.first)&.last
+    raise Serializer::Error, "No presenter for #{resources.first}" unless presenter
+    presenter.to_collection(resources, options)
   end
 
   module Serializer
@@ -34,7 +34,7 @@ module HALDecorator
           "Trying to serialize a collection using #{self} which has no collection info. " \
           "Add a 'collection' spec to the serializer or use another serializer"
       end
-      options[:paginate] = HALDecorator.paginate unless options.key? :paginate
+      options[:paginate] = HALPresenter.paginate unless options.key? :paginate
       hash = to_collection_hash(resources, options)
       JSON.generate(hash)
     end
@@ -101,7 +101,7 @@ module HALDecorator
       serialized = links.each_with_object({}) do |link, hash|
         next if policy && !policy.link?(link.rel)
         href = link.value(resource, options) or next
-        hash[link.rel] = { href: HALDecorator.href(href) }.tap do |s|
+        hash[link.rel] = { href: HALPresenter.href(href) }.tap do |s|
           s[:method] = link.http_method if link.http_method
         end
       end
@@ -117,7 +117,7 @@ module HALDecorator
         href = curie.value(resource, options) or next
         array << {
           name: curie.name,
-          href: HALDecorator.href(href),
+          href: HALPresenter.href(href),
           templated: true
         }
       end
@@ -127,32 +127,32 @@ module HALDecorator
       serialized = embedded.each_with_object({}) do |embed, hash|
         next if policy && !policy.embed?(embed.name)
         resource = embed.value(object, options) or next
-        decorator = embed.decorator_class
+        presenter = embed.presenter_class
         hash[embed.name] = 
           if resource.respond_to? :each
-            _serialize_embedded_collection(resource, decorator, options)
+            _serialize_embedded_collection(resource, presenter, options)
           else
-            decorator ||= HALDecorator.lookup_decorator(resource).first
-            decorator.to_hash(resource, options)
+            presenter ||= HALPresenter.lookup_presenter(resource).first
+            presenter.to_hash(resource, options)
           end
       end
       return {} if serialized.empty?
       { _embedded: serialized }
     end
 
-    def _serialize_embedded_collection(resources, decorator, options)
+    def _serialize_embedded_collection(resources, presenter, options)
       clazz = resources.first.class
-      decorator ||= HALDecorator.lookup_decorator(clazz)&.first
-      if decorator.nil?
+      presenter ||= HALPresenter.lookup_presenter(clazz)&.first
+      if presenter.nil?
         raise Serializer::Error,
-          "No decorator specified to handle serializing embedded #{clazz}"
+          "No presenter specified to handle serializing embedded #{clazz}"
       end
-      if decorator.respond_to?(:can_serialize_collection?, true) &&
-          decorator.can_serialize_collection?
-        decorator.to_collection_hash(resources, options)
+      if presenter.respond_to?(:can_serialize_collection?, true) &&
+          presenter.can_serialize_collection?
+        presenter.to_collection_hash(resources, options)
       else
         resources.map do |resrc|
-          decorator.to_hash(resrc, options)
+          presenter.to_hash(resrc, options)
         end
       end
     end

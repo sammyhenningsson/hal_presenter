@@ -39,10 +39,10 @@ end
 
 class PaginationTest < ActiveSupport::TestCase
   def setup
-    HALDecorator.paginate = true
+    HALPresenter.paginate = true
 
     @serializer = Class.new do
-      extend HALDecorator
+      extend HALPresenter
       attribute :id
       collection of: 'items' do
         link :self, '/the/collection'

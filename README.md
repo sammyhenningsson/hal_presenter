@@ -1,17 +1,17 @@
-# HALDecorator
-HALDecorator is a DSL for creating serializers conforming to [JSON HAL](http://stateless.co/hal_specification.html). This DSL is highly influenced by ActiveModelSerializers. My first attempted was actually to create a HAL adapter for ActiveModelSerializers. After messing around with that, I realized that it was just too messy and slow, so I decided to start over. This gem has no dependencies on other gems and will happily serialize instances of ActiveRecord, Sequel or simply POROs (most examples here will use instances of `OpenStruct` as the resource to be serialized).  
+# HALPresenter
+HALPresenter is a DSL for creating serializers conforming to [JSON HAL](http://stateless.co/hal_specification.html). This DSL is highly influenced by ActiveModelSerializers. My first attempted was actually to create a HAL adapter for ActiveModelSerializers. After messing around with that, I realized that it was just too messy and slow, so I decided to start over. This gem has no dependencies on other gems and will happily serialize instances of ActiveRecord, Sequel or simply POROs (most examples here will use instances of `OpenStruct` as the resource to be serialized).  
 I've done some simple benchmarks against using an ActiveModelSerializers adapter and HAL and its about 5 times faster (read this with a grain of salt, I might have missed some optimizations in my adapter).  
 So, generating some json from an object, whats the big deal? Well if your API is not driven by hypermedia and your payloads most of the time just looks the same, then this might be overkill. But if you do have dynamic payloads (e.g the payload attributes and links depend on the context) then this gem greatly simplifies serialization and puts all the serialization logic in one place.
 This documentation might be a bit long and dull, but skim through it and check out the examples. I think you'll get the hang of it.  
 
 ## Installation
 ```sh
-gem install hal_decorator
+gem install hal_presenter
 ```
 With Gemfile:
 
 ```sh
-gem 'hal_decorator', '~>0.3.0'
+gem 'hal_presenter', '~>0.4.0'
 ```
 
 And then execute:
@@ -24,7 +24,7 @@ $ bundle
 Lets start with an example. Say you have your typical blog and you want to serialize post resources. Posts have some text, an author and possibly some comments. Only the author of the post may edit or delete it. A serializer could then be written as:
 ``` ruby
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   model Post
   
   attribute :text
@@ -52,7 +52,7 @@ class PostSerializer
 end
 
 ```
-Then instances of Post can be serialized with `HALDecorator.to_hal(post)` which will produce the following (assuming the current user is the author of the post, else the edit/delete links would not be present):
+Then instances of Post can be serialized with `HALPresenter.to_hal(post)` which will produce the following (assuming the current user is the author of the post, else the edit/delete links would not be present):
 
 ``` ruby
 {   
@@ -107,13 +107,13 @@ Then instances of Post can be serialized with `HALDecorator.to_hal(post)` which 
 ```
 
 ## Defining a Serializer
-Serializers are defined by extending `HALDecorator` in the begining of the class declaration. This will add the following class methods:
+Serializers are defined by extending `HALPresenter` in the begining of the class declaration. This will add the following class methods:
 - [`model(clazz)`](#model)
 - [`policy(clazz)`](#policy)
 - [`attribute(name, value = nil, &block)`](#attribute)
 - [`link(rel, value = nil, &block)`](#link)
 - [`curie(rel, value = nil, &block)`](#curie)
-- [`embed(name, value = nil, decorator_class: nil, &block)`](#embed)
+- [`embed(name, value = nil, presenter_class: nil, &block)`](#embed)
 - [`collection`](#collection)
 - [`to_hal(resource = nil, options = {})`](#to_hal)
 - [`to_collection(resources = [], options = {})`](#to_collection)
@@ -124,22 +124,22 @@ Serializers are defined by extending `HALDecorator` in the begining of the class
 The `model` class method is used to register the resource Class that this serializer handles. (Theres no Rails magic that automagically maps models to serializers.)
 ``` ruby
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   model Post
 end
 ```
 This make it possible to serialize Post instances using the PostSerializer.
 ``` ruby
 post = Post.new(*args)
-HALDecorator.to_hal(post)
+HALPresenter.to_hal(post)
 ```
 Using the `model` class method is not required for serialization. The serializer can also be called directly.
 ``` ruby
 PostSerializer.to_hal(post)
 ```
-The serializer class may also be specified as an option, using the `:decorator` key.
+The serializer class may also be specified as an option, using the `:presenter` key.
 ``` ruby
-HALDecorator.to_hal(post, {decorator: PostSerializer})
+HALPresenter.to_hal(post, {presenter: PostSerializer})
 ```
 Even though the `model` class method is optional, it is very useful if the serializer should be selected dynamically and when the serializer is used for deserialization.
 
@@ -173,13 +173,13 @@ class SomePolicy
 end
 
 ```
-This gem includes a DSL that simplifies creating policies. See [`HALDecorator::Policy::DSL`](#policy-dsl).
+This gem includes a DSL that simplifies creating policies. See [`HALPresenter::Policy::DSL`](#policy-dsl).
 
 ### attribute
 The `attribute` class method specifies an attribute (property) to be serialized. The first argument, `name`, is required and must be a symbol of the attribute name. When `attribute` is called with only one argument, the resources being serialized are expected to respond to that argument and the returned value is what ends up in the payload.
 ``` ruby
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   attribute :title
 end
 post = OpenStruct.new(title: "hello")
@@ -188,7 +188,7 @@ PostSerializer.to_hal(post)   # => {"title": "hello"}
 If `attribute` is called with two arguments, then the second arguments is what ends up in the payload.
 ``` ruby
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   attribute :title, "world"
 end
 post = OpenStruct.new(title: "hello")
@@ -197,7 +197,7 @@ PostSerializer.to_hal(post)   # => {"title": "world"}
 When a block is passed to `attribute`, then the return value of that block is what ends up in the payload.
 ``` ruby
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   attribute :title do
     resource.title.upcase
   end
@@ -211,7 +211,7 @@ Notice that the resource being serialized (`post` in the above example) is acces
 The `link` class method specifies a link to be added to the _\_links_ property. The first argument, `rel`, is required. `link` must be called with either a second argument (`value`) or a block.
 ``` ruby
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   link :self, '/posts/1'
 end
 PostSerializer.to_hal   # => {"_links": {"self": {"href": "/posts/1"}}}
@@ -219,7 +219,7 @@ PostSerializer.to_hal   # => {"_links": {"self": {"href": "/posts/1"}}}
 When a block is passed to `link`, the return value of that block is what ends up as the href of the link.
 ``` ruby
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   link :self do
     "/posts/#{resource.id}"
   end
@@ -232,7 +232,7 @@ PostSerializer.to_hal(post)   # => {"_links": {"self": {"href": "/posts/5"}}}
 The `curie` class method specifies a curie to be added to the _curies_ list. The first argument, `rel`, is required. `curie` must be called with either a second argument (`value`) or a block.
 ``` ruby
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   curie :doc, '/api/docs/{rel}'
   link :'doc:user', '/users/5'
 end
@@ -241,7 +241,7 @@ PostSerializer.to_hal   # => {"_links":{"doc:user":{"href":"/users/5"},"curies":
 When a block is passed to `curie`, the return value of that block is what ends up as the href of the curie.
 ``` ruby
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   curie :doc { '/api/docs/{rel}' }
   link :'doc:user', '/users/5'
 end
@@ -250,15 +250,15 @@ PostSerializer.to_hal(post)   # => {"_links":{"doc:user":{"href":"/users/5"},"cu
 ```
 
 ### embed
-The `embed` class method specifies a nested resource to be embedded. The first argument, `name`, is required and must be a symbol. When `embed` is called with only one argument, the resource being serialized is expected to respond to the value of that argument and the returned value is what ends up in the payload. The keyword argument `decorator_class` specifies the serializer to be used for serializing the embedded resource.
+The `embed` class method specifies a nested resource to be embedded. The first argument, `name`, is required and must be a symbol. When `embed` is called with only one argument, the resource being serialized is expected to respond to the value of that argument and the returned value is what ends up in the payload. The keyword argument `presenter_class` specifies the serializer to be used for serializing the embedded resource.
 ``` ruby
 class UserSerializer
-  extend HALDecorator
+  extend HALPresenter
   attribute :name
 end
 class PostSerializer
-  extend HALDecorator
-  embed :author, decorator_class: UserSerializer
+  extend HALPresenter
+  embed :author, presenter_class: UserSerializer
 end
 user = OpenStruct.new(name: "bengt")
 post = OpenStruct.new(title: "hello", author: user)
@@ -267,12 +267,12 @@ PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 If `embed` is called with two arguments, then the second arguments is embedded.
 ``` ruby
 class UserSerializer
-  extend HALDecorator
+  extend HALPresenter
   attribute :name
 end
 class PostSerializer
-  extend HALDecorator
-  embed :author, OpenStruct.new(name: "bengt"), decorator_class: UserSerializer
+  extend HALPresenter
+  embed :author, OpenStruct.new(name: "bengt"), presenter_class: UserSerializer
 end
 post = OpenStruct.new(title: "hello")
 PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
@@ -280,30 +280,30 @@ PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 When a block is passed to `embed`, then the return value of that block is embedded.
 ``` ruby
 class UserSerializer
-  extend HALDecorator
+  extend HALPresenter
   attribute :name
 end
 class PostSerializer
-  extend HALDecorator
-  embed :author, decorator_class: UserSerializer do
+  extend HALPresenter
+  embed :author, presenter_class: UserSerializer do
     OpenStruct.new(name: "bengt")
   end
 end
 post = OpenStruct.new(title: "hello")
 PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 ```
- If the resource to be embedded has a registered Serializer then `decorator_class` is not needed.
+ If the resource to be embedded has a registered Serializer then `presenter_class` is not needed.
  ``` ruby
 class User
   def name; "bengt"; end
 end
 class UserSerializer
-  extend HALDecorator
+  extend HALPresenter
   model User
   attribute :name
 end
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   embed :author
 end
 post = OpenStruct.new(title: "hello", author: User.new)
@@ -314,7 +314,7 @@ PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 Blocks passes to `attribute`, `link`, `curie` and `embed` have access to the resource being serialized throught the `resource` method. These blocks also have access to an optional `options` hash that can be passed to `to_hal`.
 ``` ruby
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   attribute :title do
     "#{resource.id} -- #{resource.title} -- #{options[:extra]}"
   end
@@ -325,7 +325,7 @@ PostSerializer.to_hal(post, {extra: 'world'})   # => {"title": "5 -- hello -- wo
 These blocks also have access to the scope where the block was created (e.g. the Serializer class)
 ``` ruby
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   def self.bonus_text; "Common stuff"; end
   attribute :title do
     "#{bonus_text} -- #{resource.title}"
@@ -338,7 +338,7 @@ Note: this does not mean that `self` inside the block is the serializer class. T
 If the block passed to `attribute` returns `nil` then the serialized value will be `null`. If the block passed to link, curie or embed returns `nil`, then the corresponding property will not be serialized.
 ``` ruby
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   attribute :title
   attribute :foo { nil }
   link :self { "/posts/#{resource.id}" }
@@ -358,7 +358,7 @@ PostSerializer.to_hal(post, {current_user: user})   # => "{"title":"hello","foo"
 The `collection` class method is used to make a serializer capable of serializing an array of resources. Serializing collections may of course be done with separate serializer, but should we want to use the same serializer class for both then `collection` will make that work. The method takes a required keyword paramter named `:of`, which will be used as the key in corresponding _\_embedded_ property. Each entry in first argument given to `to_collection` will then be serialized with this serializer.
 ``` ruby
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   attribute :id
   attribute :title
   collection of: 'posts'
@@ -371,7 +371,7 @@ PostSerializer.to_collection(list)   # => {"_embedded":{"posts":[{"id":1,"title"
 The `collection` class method takes an optional block. The purpose of this block is to be able to set properties and links on the serialized collection. Note: this block does not run in the same scope as blocks passed to `attribute`, `link`, `curie` and `embed`.
 ``` ruby
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   attribute :id
   attribute :title
   collection of: 'posts' do
@@ -459,7 +459,7 @@ The `post_serialize` class method can used to run a hook after each serializatio
   end
   
   class FormSerializer
-    extend HALDecorator
+    extend HALPresenter
 
     model Form
 
@@ -567,17 +567,17 @@ class Post
   attr_accessor :title, :author
 end
 class UserSerializer
-  extend HALDecorator
+  extend HALPresenter
   model User
   attribute :name
   link :self, '/user'
 end
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   model Post
   attribute :title
   link :self, '/post'
-  embed :author, decorator_class: UserSerializer
+  embed :author, presenter_class: UserSerializer
 end
 user = User.new.tap { |user| user.name = "bengt" }
 post = Post.new.tap do |post|
@@ -610,17 +610,17 @@ class Post
   end
 end
 class UserSerializer
-  extend HALDecorator
+  extend HALPresenter
   model User
   attribute :name
   link :self, '/user'
 end
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   model Post
   attribute :title
   link :self, '/post'
-  embed :author, decorator_class: UserSerializer
+  embed :author, presenter_class: UserSerializer
 end
 payload = JSON.generate(
   {
@@ -657,7 +657,7 @@ class User
   attr_accessor :name
 end
 class UserSerializer
-  extend HALDecorator
+  extend HALPresenter
   model User
   attribute :name
   link :self, '/user'
@@ -688,7 +688,7 @@ users.map(&:name)                        # => ["user1", "user2", "user3", "user4
 Serializers may use inheritance and should work just as expected 
 ```ruby
 class BaseSerializer
-  extend HALDecorator
+  extend HALPresenter
 
   attribute :base, "will_be_overwritten"
   attribute :title
@@ -710,32 +710,32 @@ PostSerializer.to_hal(post)   # => {"title": "hello", "base": "child_attribute",
 ```
 
 ## Config
-### HALDecorator.base_href
+### HALPresenter.base_href
 This module method can be used to specify a base url that will get prepended to links hrefs.
 ```ruby
-HALDecorator.base_href = 'https://localhost:3000/'
+HALPresenter.base_href = 'https://localhost:3000/'
 
 class PostSerializer
-  extend HALDecorator
+  extend HALPresenter
   link :self, '/posts/1'
 end
 PostSerializer.to_hal   # => {"_links": {"self": {"href": "https://localhost:3000/posts/1"}}}
 ```
 
-### HALDecorator.paginate
-Setting `HALDecorator.paginate = true` will add next/prev links for collections when possible. Requirements for this is:
+### HALPresenter.paginate
+Setting `HALPresenter.paginate = true` will add next/prev links for collections when possible. Requirements for this is:
 - The resource being serialized is a paginated collection (Kaminari, will_paginate and Sequel are supported)
 - The serializer being used has a collection block which declares a self link
 
 ## Policy DSL
-HALDecorator includes a DSL for creating polices. By including `HALDecorator::Policy::DSL` into your policy class you get the following class methods:
+HALPresenter includes a DSL for creating polices. By including `HALPresenter::Policy::DSL` into your policy class you get the following class methods:
 - `attribute(*names, &block)`
 - `link(*rels, &block)`
 - `embed(*names, &block)`  
 These methods all work the same way and creates one or more rules for each `name` argument (`rel` for links). If no block is given then the corresponding attribute/link/embed will always be serialized. If the block evaluates to `true` then the corresponding attribute, link, embedded resource will be serialized. Otherwise it will not be serialized. The block has access to the current user and the resource that should be serialized from the methods `current_user` resp. `resource`.
 ```ruby
 class UserPolicy
-  include HALDecorator::Policy::DSL
+  include HALPresenter::Policy::DSL
 
   attribute :first_name, last_name
 

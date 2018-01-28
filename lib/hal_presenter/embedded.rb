@@ -1,13 +1,13 @@
-require 'hal_decorator/property'
+require 'hal_presenter/property'
 
-module HALDecorator
+module HALPresenter
   module Embedded
-    class Embed < HALDecorator::Property
-      attr_reader :decorator_class
+    class Embed < HALPresenter::Property
+      attr_reader :presenter_class
 
-      def initialize(name, value = nil, decorator_class: nil, &block)
+      def initialize(name, value = nil, presenter_class: nil, &block)
         super(name, value, &block)
-        @decorator_class = decorator_class
+        @presenter_class = presenter_class
       end
     end
 

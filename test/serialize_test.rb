@@ -11,14 +11,14 @@ class SerializerTest < ActiveSupport::TestCase
     end
   end
 
-  class ParentDecorator
-    extend HALDecorator
+  class ParentPresenter
+    extend HALPresenter
 
     attribute :title
   end
 
-  class ChildDecorator
-    extend HALDecorator
+  class ChildPresenter
+    extend HALPresenter
     model Child
 
     attribute :data do
@@ -26,8 +26,8 @@ class SerializerTest < ActiveSupport::TestCase
     end
   end
 
-  class Decorator
-    extend HALDecorator
+  class Presenter
+    extend HALPresenter
 
     attribute :title
     attribute :comment
@@ -39,8 +39,8 @@ class SerializerTest < ActiveSupport::TestCase
     end
     link :'doc:user', '/some/uri/with/namespace'
     curie :'doc', '/some/templated/uri/{rel}'
-    embed :parent, decorator_class: ParentDecorator
-    embed :children, decorator_class: ChildDecorator
+    embed :parent, presenter_class: ParentPresenter
+    embed :children, presenter_class: ChildPresenter
   end
 
   def setup
@@ -100,14 +100,14 @@ class SerializerTest < ActiveSupport::TestCase
     }
   end
 
-  test 'HALDecorator.to_hal' do
-    options = { decorator: Decorator }
-    payload = HALDecorator.to_hal(@obj, options)
+  test 'HALPresenter.to_hal' do
+    options = { presenter: Presenter }
+    payload = HALPresenter.to_hal(@obj, options)
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
-  test 'Decorator.to_hal' do
-    payload = Decorator.to_hal(@obj)
+  test 'Presenter.to_hal' do
+    payload = Presenter.to_hal(@obj)
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
@@ -128,7 +128,7 @@ class SerializerTest < ActiveSupport::TestCase
       end
     end
 
-    class PolicyDecorator < Decorator
+    class PolicyPresenter < Presenter
       policy Policy
     end
 
@@ -146,12 +146,12 @@ class SerializerTest < ActiveSupport::TestCase
       }
     }
 
-    payload = PolicyDecorator.to_hal(@obj)
+    payload = PolicyPresenter.to_hal(@obj)
     assert_sameish_hash(expected, JSON.parse(payload))
   end
 
-  test 'Serialize full links with Decorator.base_href' do
-    HALDecorator.base_href = 'https://example.com/'
+  test 'Serialize full links with Presenter.base_href' do
+    HALPresenter.base_href = 'https://example.com/'
     @expected[:_links].each do |key, value|
       if key == :curies
         value.each { |curie| curie[:href].prepend('https://example.com') }
@@ -161,16 +161,16 @@ class SerializerTest < ActiveSupport::TestCase
     end
 
     begin
-      payload = Decorator.to_hal(@obj)
+      payload = Presenter.to_hal(@obj)
     ensure
-      HALDecorator.base_href = nil
+      HALPresenter.base_href = nil
     end
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
-  test 'Decorator.to_hal with options' do
+  test 'Presenter.to_hal with options' do
     options = { edit_uri: 'foo', child_data: 'optional_data' }
-    payload = Decorator.to_hal(@obj, options)
+    payload = Presenter.to_hal(@obj, options)
     result = JSON.parse(payload, symbolize_names: true)
 
     assert_equal 'foo', result[:_links][:edit][:href]
@@ -192,27 +192,27 @@ class SerializerTest < ActiveSupport::TestCase
 
     obj = FurtiveChild.new("foo", "bar")
     assert_raises NoMethodError do
-      ChildDecorator.to_hal(obj)
+      ChildPresenter.to_hal(obj)
     end
   end
 
   test 'multiple nested embeds' do
     c = Class.new do
-      extend HALDecorator
+      extend HALPresenter
       link :self, '/grandchild'
-      attribute :data { resource.data }
+      attribute(:data) { resource.data }
     end
     b = Class.new do
-      extend HALDecorator
+      extend HALPresenter
       link :self, '/child'
-      attribute :data { resource.data }
-      embed :child, decorator_class: c
+      attribute(:data) { resource.data }
+      embed :child, presenter_class: c
     end
     a = Class.new do
-      extend HALDecorator
+      extend HALPresenter
       link :self, '/'
-      attribute :data { resource.data }
-      embed :child, decorator_class: b
+      attribute(:data) { resource.data }
+      embed :child, presenter_class: b
     end
 
     obj = OpenStruct.new(
@@ -263,11 +263,11 @@ class SerializerTest < ActiveSupport::TestCase
       def f; 'F'; end
     end
 
-    decorator_a = Class.new(ChildDecorator) do
+    presenter_a = Class.new(ChildPresenter) do
       attribute :a, 'A'
     end
 
-    Class.new(decorator_a) do
+    Class.new(presenter_a) do
       model foo
       attribute :f
     end
@@ -275,7 +275,7 @@ class SerializerTest < ActiveSupport::TestCase
     child = Child.new(:child1, :child1_data)
     foo = foo.new(:foo1, :foo1_data)
 
-    HALDecorator.to_hal(child).tap do |payload|
+    HALPresenter.to_hal(child).tap do |payload|
       assert_sameish_hash(
         {
           data: 'child1_data',
@@ -285,7 +285,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    HALDecorator.to_hal(foo).tap do |payload|
+    HALPresenter.to_hal(foo).tap do |payload|
       assert_sameish_hash(
         {
           data: 'foo1_data',
@@ -298,59 +298,59 @@ class SerializerTest < ActiveSupport::TestCase
   end
 
   test 'inheritance of attributes' do
-    decorator_a = Class.new do
-      extend HALDecorator
+    presenter_a = Class.new do
+      extend HALPresenter
       def self.a; "A"; end
-      attribute :a { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
+      attribute(:a) { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
     end
 
-    decorator_b = Class.new(decorator_a) do
+    presenter_b = Class.new(presenter_a) do
       def self.b; "B"; end
-      attribute :b { b }
-      attribute :x { "#{a}" }
+      attribute(:b) { b }
+      attribute(:x) { "#{a}" }
     end
 
-    decorator_c = Class.new(decorator_b) do
+    presenter_c = Class.new(presenter_b) do
       def self.c; "C"; end
-      attribute :b, 'bc'
-      attribute :c { c }
-      attribute :y { "#{a}#{b}" }
+      attribute(:b, 'bc')
+      attribute(:c) { c }
+      attribute(:y) { "#{a}#{b}" }
     end
 
-    decorator_a.to_hal(nil).tap do |payload|
+    presenter_a.to_hal(nil).tap do |payload|
       assert_sameish_hash({a: 'A'}, JSON.parse(payload))
     end
 
-    decorator_b.to_hal(nil).tap do |payload|
+    presenter_b.to_hal(nil).tap do |payload|
       assert_sameish_hash({a: 'A', b: 'B', x: 'A'}, JSON.parse(payload))
     end
 
-    decorator_c.to_hal(nil, {c: true}).tap do |payload|
+    presenter_c.to_hal(nil, {c: true}).tap do |payload|
       assert_sameish_hash({a: 'AC', b: 'bc', c: 'C', x: 'A', y: 'AB'}, JSON.parse(payload))
     end
   end
 
   test 'inheritance of links' do
-    decorator_a = Class.new do
-      extend HALDecorator
+    presenter_a = Class.new do
+      extend HALPresenter
       def self.a; "A"; end
-      link :a { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
+      link(:a) { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
     end
 
-    decorator_b = Class.new(decorator_a) do
+    presenter_b = Class.new(presenter_a) do
       def self.b; "B"; end
-      link :b { b }
-      link :x { "#{a}" }
+      link(:b) { b }
+      link(:x) { "#{a}" }
     end
 
-    decorator_c = Class.new(decorator_b) do
+    presenter_c = Class.new(presenter_b) do
       def self.c; "C"; end
-      link :b, 'bc'
-      link :c { c }
-      link :y { "#{a}#{b}" }
+      link(:b, 'bc')
+      link(:c) { c }
+      link(:y) { "#{a}#{b}" }
     end
 
-    decorator_a.to_hal(nil).tap do |payload|
+    presenter_a.to_hal(nil).tap do |payload|
       assert_sameish_hash(
         {
           _links: {
@@ -363,7 +363,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    decorator_b.to_hal(nil).tap do |payload|
+    presenter_b.to_hal(nil).tap do |payload|
       assert_sameish_hash(
         {
           _links: {
@@ -382,7 +382,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    decorator_c.to_hal(nil, {c: true}).tap do |payload|
+    presenter_c.to_hal(nil, {c: true}).tap do |payload|
       assert_sameish_hash(
         {
           _links: {
@@ -409,26 +409,26 @@ class SerializerTest < ActiveSupport::TestCase
   end
 
   test 'inheritance of curies' do
-    decorator_a = Class.new do
-      extend HALDecorator
+    presenter_a = Class.new do
+      extend HALPresenter
       def self.a; "A"; end
-      curie :a { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
+      curie(:a) { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
     end
 
-    decorator_b = Class.new(decorator_a) do
+    presenter_b = Class.new(presenter_a) do
       def self.b; "B"; end
-      curie :b { b }
-      curie :x { "#{a}" }
+      curie(:b) { b }
+      curie(:x) { "#{a}" }
     end
 
-    decorator_c = Class.new(decorator_b) do
+    presenter_c = Class.new(presenter_b) do
       def self.c; "C"; end
-      curie :b, 'bc'
-      curie :c { c }
-      curie :y { "#{a}#{b}" }
+      curie(:b, 'bc')
+      curie(:c) { c }
+      curie(:y) { "#{a}#{b}" }
     end
 
-    decorator_a.to_hal(nil).tap do |payload|
+    presenter_a.to_hal(nil).tap do |payload|
       assert_sameish_hash(
         {
           _links: {
@@ -445,7 +445,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    decorator_b.to_hal(nil).tap do |payload|
+    presenter_b.to_hal(nil).tap do |payload|
       assert_sameish_hash(
         {
           _links: {
@@ -472,7 +472,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    decorator_c.to_hal(nil, {c: true}).tap do |payload|
+    presenter_c.to_hal(nil, {c: true}).tap do |payload|
       assert_sameish_hash(
         {
           _links: {
@@ -511,17 +511,17 @@ class SerializerTest < ActiveSupport::TestCase
   end
 
   test 'inheritance of embedded' do
-    decorator_a = Class.new do
-      extend HALDecorator
-      embed :r, decorator_class: ChildDecorator
+    presenter_a = Class.new do
+      extend HALPresenter
+      embed :r, presenter_class: ChildPresenter
     end
 
-    decorator_b = Class.new(decorator_a) do
-      embed :b, decorator_class: ChildDecorator
+    presenter_b = Class.new(presenter_a) do
+      embed :b, presenter_class: ChildPresenter
     end
 
-    decorator_c = Class.new(decorator_b) do
-      embed :r, decorator_class: ParentDecorator
+    presenter_c = Class.new(presenter_b) do
+      embed :r, presenter_class: ParentPresenter
     end
 
     obj = OpenStruct.new(
@@ -530,7 +530,7 @@ class SerializerTest < ActiveSupport::TestCase
       b: Child.new(:child_b, :child_b_data)
     )
 
-    decorator_a.to_hal(obj).tap do |payload|
+    presenter_a.to_hal(obj).tap do |payload|
       assert_sameish_hash(
         {
           _embedded: {
@@ -543,7 +543,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    decorator_b.to_hal(obj).tap do |payload|
+    presenter_b.to_hal(obj).tap do |payload|
       assert_sameish_hash(
         {
           _embedded: {
@@ -559,7 +559,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    decorator_c.to_hal(obj).tap do |payload|
+    presenter_c.to_hal(obj).tap do |payload|
       assert_sameish_hash(
         {
           _embedded: {

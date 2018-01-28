@@ -1,6 +1,6 @@
-require 'hal_decorator/property'
+require 'hal_presenter/property'
 
-module HALDecorator
+module HALPresenter
 
   def self.base_href=(base)
     @base_href = base&.sub(%r(/*$), '')
@@ -14,7 +14,7 @@ module HALDecorator
 
   module Links
 
-    class Link < HALDecorator::Property
+    class Link < HALPresenter::Property
       attr_reader :http_method
       def initialize(rel, value = nil, http_method: nil, &block)
         if value.nil? && !block_given?

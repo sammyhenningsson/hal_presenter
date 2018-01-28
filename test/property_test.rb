@@ -8,29 +8,29 @@ class PropertyTest < ActiveSupport::TestCase
   end
 
   test 'that value is returned from property' do
-    property = HALDecorator::Property.new(:name, 'bicycle')
+    property = HALPresenter::Property.new(:name, 'bicycle')
     assert_equal('bicycle', property.value)
     assert_equal('bicycle', property.value(@item))
   end
 
   test 'that value is returned from item' do
-    property = HALDecorator::Property.new(:name)
+    property = HALPresenter::Property.new(:name)
     assert_equal('car', property.value(@item))
   end
 
   test 'that value is returned from block' do
-    property = HALDecorator::Property.new(:name) { 'bus' }
+    property = HALPresenter::Property.new(:name) { 'bus' }
     assert_equal('bus', property.value(@item))
   end
 
   test 'that resource is accessible in block' do
-    property = HALDecorator::Property.new(:name) { resource.color }
+    property = HALPresenter::Property.new(:name) { resource.color }
     assert_equal('green', property.value(@item))
   end
 
   test 'that options is accessible in block' do
     opts = { default_value: 'blue' }
-    property = HALDecorator::Property.new(:name) { options[:default_value] }
+    property = HALPresenter::Property.new(:name) { options[:default_value] }
     assert_equal('blue', property.value(@item, opts))
   end
 
@@ -39,7 +39,7 @@ class PropertyTest < ActiveSupport::TestCase
     opts2 = { default_value: 'black' }
     item2 = Struct::Item.new('bus', 'white')
 
-    property = HALDecorator::Property.new(:name) do
+    property = HALPresenter::Property.new(:name) do
       [resource.name, options[:default_value]]
     end
 
@@ -48,12 +48,12 @@ class PropertyTest < ActiveSupport::TestCase
   end
 
   test 'block can access methods from block creation scope' do
-    def decorator_foo(arg)
+    def presenter_foo(arg)
       x = yield if block_given?
       "#{arg}_#{x}"
     end
-    property = HALDecorator::Property.new(:name) do
-      decorator_foo('something') { 'complex' }
+    property = HALPresenter::Property.new(:name) do
+      presenter_foo('something') { 'complex' }
     end
     assert_equal('something_complex', property.value)
   end

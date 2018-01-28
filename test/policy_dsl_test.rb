@@ -5,7 +5,7 @@ class PolicyDSLTest < ActiveSupport::TestCase
 
   def setup
     @policy = Class.new do
-      include HALDecorator::Policy::DSL
+      include HALPresenter::Policy::DSL
       def default(current_user)
         current_user&.name == 'bengt'
       end

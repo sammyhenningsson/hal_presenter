@@ -1,4 +1,4 @@
-module HALDecorator
+module HALPresenter
   class Property
     attr_reader :name, :resource, :options
 

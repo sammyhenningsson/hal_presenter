@@ -1,6 +1,6 @@
-require 'hal_decorator/property'
+require 'hal_presenter/property'
 
-module HALDecorator
+module HALPresenter
   module Attributes
     def attribute(*args, &block)
       @_attributes ||= init_attributes

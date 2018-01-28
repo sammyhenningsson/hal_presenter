@@ -3,7 +3,7 @@ require 'test_helper'
 class PolicyTest < ActiveSupport::TestCase
 
   def setup
-    @serializer = Class.new { extend HALDecorator }
+    @serializer = Class.new { extend HALPresenter }
   end
 
   test 'policy inheritance' do

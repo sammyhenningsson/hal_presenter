@@ -1,4 +1,4 @@
-module HALDecorator
+module HALPresenter
   class << self
     attr_accessor :paginate
   end

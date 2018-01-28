@@ -1,4 +1,4 @@
-module HALDecorator
+module HALPresenter
   module Policy
     module DSL
 

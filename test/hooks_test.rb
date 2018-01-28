@@ -3,8 +3,8 @@ require 'ostruct'
 
 class HooksTest < ActiveSupport::TestCase
 
-  class HooksDecorator
-    extend HALDecorator
+  class HooksPresenter
+    extend HALPresenter
 
     attribute :title
 
@@ -26,23 +26,23 @@ class HooksTest < ActiveSupport::TestCase
     @options = { data: 'world' }
   end
 
-  test 'HooksDecorator.to_hal with post serialize hook' do
-    payload = HooksDecorator.to_hal(@item, @options)
+  test 'HooksPresenter.to_hal with post serialize hook' do
+    payload = HooksPresenter.to_hal(@item, @options)
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
   test 'inheritance of post serialize hook' do
-    decorator_a = Class.new(HooksDecorator) do
+    presenter_a = Class.new(HooksPresenter) do
       attribute :a, 'A'
     end
 
-    decorator_b = Class.new(decorator_a) do
+    presenter_b = Class.new(presenter_a) do
       post_serialize do |hash|
         hash[:data] = 'overridden'
       end
     end
 
-    decorator_a.to_hal(@item, @options).tap do |payload|
+    presenter_a.to_hal(@item, @options).tap do |payload|
       @expected[:a] = 'A'
       assert_sameish_hash(
         @expected,
@@ -50,7 +50,7 @@ class HooksTest < ActiveSupport::TestCase
       )
     end
 
-    decorator_b.to_hal(@item, @options).tap do |payload|
+    presenter_b.to_hal(@item, @options).tap do |payload|
       assert_sameish_hash(
         {
           title: 'hooks',
