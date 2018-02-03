@@ -62,8 +62,13 @@ module HALPresenter
         serialized.merge! _serialize_links(links, curies, resources, nil, options)
         Pagination.paginate!(serialized, resources) if options[:paginate]
 
+        # Embedded from collection block
+        embedded = _serialize_embedded(parameters.embedded, resources, nil, options)
+        serialized[:_embedded] = embedded[:_embedded] || {}
+
+        # Embedded resources
         serialized_resources = resources.map { |resource| to_hash(resource, options) }
-        serialized[:_embedded] = { parameters.name => serialized_resources }
+        serialized[:_embedded].merge!({parameters.name => serialized_resources })
       end
     end
 

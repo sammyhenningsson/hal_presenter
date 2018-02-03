@@ -7,6 +7,7 @@ module HALPresenter
       include Attributes
       include Links
       include Curies
+      include Embedded
 
       attr_reader :name
 
