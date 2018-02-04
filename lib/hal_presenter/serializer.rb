@@ -54,16 +54,17 @@ module HALPresenter
     end
 
     def to_collection_hash(resources, options)
+      policy = policy_class&.new(options[:current_user], nil, options)
       parameters = collection_parameters
       links = parameters.links
       curies = parameters.curies
       {}.tap do |serialized|
-        serialized.merge!  _serialize_attributes(parameters.attributes, resources, nil, options)
-        serialized.merge! _serialize_links(links, curies, resources, nil, options)
+        serialized.merge!  _serialize_attributes(parameters.attributes, resources, policy, options)
+        serialized.merge! _serialize_links(links, curies, resources, policy, options)
         Pagination.paginate!(serialized, resources) if options[:paginate]
 
         # Embedded from collection block
-        embedded = _serialize_embedded(parameters.embedded, resources, nil, options)
+        embedded = _serialize_embedded(parameters.embedded, resources, policy, options)
         serialized[:_embedded] = embedded[:_embedded] || {}
 
         # Embedded resources
