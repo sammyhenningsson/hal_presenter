@@ -92,6 +92,7 @@ module HALPresenter
       end
 
       def link?(rel)
+        return true if rel == :self
         run self.class.rules.link_rule_for(rel)
       end
 
