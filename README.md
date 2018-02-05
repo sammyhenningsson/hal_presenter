@@ -11,7 +11,7 @@ gem install hal_presenter
 With Gemfile:
 
 ```sh
-gem 'hal_presenter', '~>0.4.0'
+gem 'hal_presenter', '~>0.4.1'
 ```
 
 And then execute:

@@ -1,14 +1,11 @@
 # -*- encoding: utf-8 -*-
 Gem::Specification.new do |gem|
   gem.name        = 'hal_presenter'
-  gem.version     = '0.4.0'
-  gem.summary     = "HAL serializer"
+  gem.version     = '0.4.1'
+  gem.summary     = "JSON HAL serializer"
   gem.description = <<~EOS
                     A DSL for serializing resources according to
                     HypertextApplicationLanguage.
-                    This gem has been deprecated and has been replaced by 'hal_presenter'.
-                    See: https://rubygems.org/gems/hal_presenter
-                    And: https://github.com/sammyhenningsson/hal_presenter
                     EOS
   gem.authors     = ["Sammy Henningsson"]
   gem.email       = 'sammy.henningsson@gmail.com'

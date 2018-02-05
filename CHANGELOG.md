@@ -1,3 +1,9 @@
+## 0.4.1
+ * Policies created with HALDecorator::Policy::DSL now always allows links with rel `self`.
+ * Policy is now used in collection blocks as well.
+ * Make serializer class methods available in collection block (through method_missing).
+ * Support `embed` in collection blocks.
+ * Fix broken backwards compatibility with `decorator_class` as kw arg to `embed`.
 ## 0.4.0
  * Renaming Decorator to Presenter
  * Pass serializer options to Policy
