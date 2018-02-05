@@ -20,6 +20,14 @@ And then execute:
 $ bundle
 ```
 
+### Name changed from HALDecorator to HALPresenter
+Since serializers created using this gem actually follow the presenter pattern rather than the decorator pattern, it felt appropriate to rename the gem.
+If you are upgrading from hal_decorator <= 0.3.6 then, all that is required is to install hal_presenter version >=0.4.1 and change all occurencies of `require 'hal_decorator'` to `require 'hal_presenter'. For backwards compatibility with serializers written with hal_decorator, the `HALDecorator` module will still be available when you require `hal_presenter`. Though, this will probably be removed in the future so you might want to update your serializer files. The following commands may be of great help:
+```sh
+grep -rl Decorator . | xargs sed -i "s/Decorator/Presenter/g"
+grep -rl decorator . | xargs sed -i "s/decorator/presenter/g"
+```
+
 ## Intro
 Lets start with an example. Say you have your typical blog and you want to serialize post resources. Posts have some text, an author and possibly some comments. Only the author of the post may edit or delete it. A serializer could then be written as:
 ``` ruby
@@ -310,50 +318,6 @@ post = OpenStruct.new(title: "hello", author: User.new)
 PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 ```
 
-#### blocks passed to attribute, link, curie and embed
-Blocks passes to `attribute`, `link`, `curie` and `embed` have access to the resource being serialized throught the `resource` method. These blocks also have access to an optional `options` hash that can be passed to `to_hal`.
-``` ruby
-class PostSerializer
-  extend HALPresenter
-  attribute :title do
-    "#{resource.id} -- #{resource.title} -- #{options[:extra]}"
-  end
-end
-post = OpenStruct.new(id: 5, title: "hello")
-PostSerializer.to_hal(post, {extra: 'world'})   # => {"title": "5 -- hello -- world"}
-```
-These blocks also have access to the scope where the block was created (e.g. the Serializer class)
-``` ruby
-class PostSerializer
-  extend HALPresenter
-  def self.bonus_text; "Common stuff"; end
-  attribute :title do
-    "#{bonus_text} -- #{resource.title}"
-  end
-end
-post = OpenStruct.new(id: 5, title: "hello")
-PostSerializer.to_hal(post)   # => {"title":"Common stuff -- hello"}
-```
-Note: this does not mean that `self` inside the block is the serializer class. The access to the serializer class methods is done by delegation.  
-If the block passed to `attribute` returns `nil` then the serialized value will be `null`. If the block passed to link, curie or embed returns `nil`, then the corresponding property will not be serialized.
-``` ruby
-class PostSerializer
-  extend HALPresenter
-  attribute :title
-  attribute :foo { nil }
-  link :self { "/posts/#{resource.id}" }
-  link :edit do
-    "/posts/#{resource.id}" if resource.author_id == options[:current_user].id
-  end
-end
-user = OpenStruct.new(id: 5)
-post = OpenStruct.new(id: 1, title: "hello", author_id: 2)
-PostSerializer.to_hal(post, {current_user: user})   # => {"title":"hello","foo":null,"_links":{"self":{"href":"/posts/1"}}}
-
-user = OpenStruct.new(id: 2)
-PostSerializer.to_hal(post, {current_user: user})   # => "{"title":"hello","foo":null,"_links":{"self":{"href":"/posts/1"},"edit":{"href":"/posts/1"}}}"
-```
-
 ### collection
 The `collection` class method is used to make a serializer capable of serializing an array of resources. Serializing collections may of course be done with separate serializer, but should we want to use the same serializer class for both then `collection` will make that work. The method takes a required keyword paramter named `:of`, which will be used as the key in the corresponding _\_embedded_ property. Each entry in first argument given to `to_collection` will then be serialized with this serializer.
 ``` ruby
@@ -368,7 +332,7 @@ list = (1..2).map do |i|
 end
 PostSerializer.to_collection(list)   # => {"_embedded":{"posts":[{"id":1,"title":"hello1"},{"id":2,"title":"hello2"}]}}
 ```
-The `collection` class method takes an optional block. The purpose of this block is to be able to set properties and links on the serialized collection. Note: this block does not run in the same scope as blocks passed to `attribute`, `link`, `curie` and `embed`.
+The `collection` class method takes an optional block. The purpose of this block is to be able to set attributes, links and embedded resources on the serialized collection.
 ``` ruby
 class PostSerializer
   extend HALPresenter
@@ -416,6 +380,51 @@ The response above with some newlines.
 }
 ```
 Note: the block given to the `:number_of_posts` attribute is using the method `resources`. This is just and alias for `resource` which looks better inside collections. 
+
+#### blocks passed to attribute, link, curie, embed and collection
+Blocks passes to `attribute`, `link`, `curie` and `embed` have access to the resource being serialized throught the `resource` method. These blocks also have access to an optional `options` hash that can be passed to `to_hal`.
+``` ruby
+class PostSerializer
+  extend HALPresenter
+  attribute :title do
+    "#{resource.id} -- #{resource.title} -- #{options[:extra]}"
+  end
+end
+post = OpenStruct.new(id: 5, title: "hello")
+PostSerializer.to_hal(post, {extra: 'world'})   # => {"title": "5 -- hello -- world"}
+```
+These blocks also have access to the scope where the block was created (e.g. the Serializer class)
+``` ruby
+class PostSerializer
+  extend HALPresenter
+  def self.bonus_text; "Common stuff"; end
+  attribute :title do
+    "#{bonus_text} -- #{resource.title}"
+  end
+end
+post = OpenStruct.new(id: 5, title: "hello")
+PostSerializer.to_hal(post)   # => {"title":"Common stuff -- hello"}
+```
+Note: this does not mean that `self` inside the block is the serializer class. The access to the serializer class methods is done by delegation.  
+If the block passed to `attribute` returns `nil` then the serialized value will be `null`. If the block passed to link, curie or embed returns `nil`, then the corresponding property will not be serialized.
+``` ruby
+class PostSerializer
+  extend HALPresenter
+  attribute :title
+  attribute :foo { nil }
+  link :self { "/posts/#{resource.id}" }
+  link :edit do
+    "/posts/#{resource.id}" if resource.author_id == options[:current_user].id
+  end
+end
+user = OpenStruct.new(id: 5)
+post = OpenStruct.new(id: 1, title: "hello", author_id: 2)
+PostSerializer.to_hal(post, {current_user: user})   # => {"title":"hello","foo":null,"_links":{"self":{"href":"/posts/1"}}}
+
+user = OpenStruct.new(id: 2)
+PostSerializer.to_hal(post, {current_user: user})   # => "{"title":"hello","foo":null,"_links":{"self":{"href":"/posts/1"},"edit":{"href":"/posts/1"}}}"
+```
+
 
 ### to_hal
 See examples in [`attribute`](#attribute), [`link`](#link), [`curie`](#curie) and [`embed`](#embed).
@@ -737,7 +746,7 @@ These methods all work the same way and creates one or more rules for each `name
 class UserPolicy
   include HALPresenter::Policy::DSL
 
-  attribute :first_name, last_name
+  attribute :first_name, :last_name
 
   attribute :email do
     # show name and email attributes if user is logged in
@@ -749,9 +758,7 @@ class UserPolicy
     current_user && resource.user.id == current_user.id
   end
   
-  link :self do
-    true
-  end
+  link :self
   
   link :edit do
     edit?
