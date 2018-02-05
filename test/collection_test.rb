@@ -3,6 +3,11 @@ require 'ostruct'
 
 class CollectionTest < ActiveSupport::TestCase
 
+  class ChildPresenter
+    extend HALPresenter
+    attribute :greeting
+  end
+
   Item = Struct.new(:id, :title, :data)
 
   class CollectionPresenter
@@ -26,7 +31,12 @@ class CollectionTest < ActiveSupport::TestCase
         return unless options.key? :page
         "/items?page=#{options[:page]}"
       end
+
+      embed :child, presenter_class: ChildPresenter do
+        OpenStruct.new(greeting: 'hello')
+      end
     end
+
   end
 
   def setup
@@ -42,6 +52,9 @@ class CollectionTest < ActiveSupport::TestCase
         }
       },
       _embedded: {
+        child: {
+          greeting: 'hello'
+        },
         items: [
           {
             title: 'title1',
@@ -157,16 +170,19 @@ class CollectionTest < ActiveSupport::TestCase
     payload = PresenterWithoutCollectionBlock.to_collection(@items)
     @expected.delete(:count)
     @expected.delete(:_links)
+    @expected[:_embedded].delete(:child)
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
   test 'inheritance of collection' do
     SubItem = Struct.new(:id, :title, :data)
 
+    # presenter_a inherits CollectionPresenter
     presenter_a = Class.new(CollectionPresenter) do
       model SubItem
     end
 
+    # presenter_b inherits presenter_a
     presenter_b = Class.new(presenter_a) do
       collection of: 'entries' do
         attribute :count
@@ -186,6 +202,7 @@ class CollectionTest < ActiveSupport::TestCase
 
     presenter_b.to_collection(@items).tap do |payload|
       expected = @expected
+      expected[:_embedded].delete(:child)
       expected[:_embedded][:entries] = expected[:_embedded].delete(:items)
       assert_sameish_hash(
         expected,

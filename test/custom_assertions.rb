@@ -7,12 +7,15 @@ module Minitest
         expected.is_a?(Hash) && actual.is_a?(Hash),
         'Inputs must be instances of Hash'
       )
-      assert(
-        expected.keys.size == actual.keys.size,
-        "Expected hash with #{expected.keys.size} keys, " \
-        "got hash with #{actual.keys.size} keys.\n" \
-        "Expected: #{expected}\nActual: #{actual}"
-      )
+
+      msg ||= <<~EOS
+        Expected hash with #{expected.keys.size} keys
+        Got hash with #{actual.keys.size} keys
+        Expected: #{JSON.pretty_generate(expected)}
+        Actual: #{JSON.pretty_generate(actual)}
+      EOS
+
+      assert(expected.keys.size == actual.keys.size, msg)
       assert_equal(stringify_keys(expected), stringify_keys(actual), msg)
     end
 
