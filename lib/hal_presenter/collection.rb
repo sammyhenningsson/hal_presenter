@@ -9,16 +9,29 @@ module HALPresenter
       include Curies
       include Embedded
 
-      attr_reader :name
+      attr_reader :name, :scope
 
-      def initialize(name, &block)
+      def initialize(name, scope, &block)
         @name = name
-        instance_exec(&block) if block_given?
+        return unless block_given?
+        @scope = scope
+        instance_exec(&block)
+      end
+
+      def method_missing(method, *args, &block)
+        return super unless scope&.respond_to? method
+        define_singleton_method(method) { |*a, &b| scope.public_send method, *a, &b }
+        public_send(method, *args, &block)
+      end
+
+      def respond_to_missing?(method, include_private = false)
+        return true if scope&.respond_to? method
+        super
       end
     end
 
     def collection(of:, &block)
-      @_parameters = CollectionParameters.new(of, &block)
+      @_parameters = CollectionParameters.new(of, self, &block)
     end
 
     protected

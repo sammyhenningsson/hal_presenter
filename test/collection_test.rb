@@ -36,7 +36,6 @@ class CollectionTest < ActiveSupport::TestCase
         OpenStruct.new(greeting: 'hello')
       end
     end
-
   end
 
   def setup
@@ -211,4 +210,37 @@ class CollectionTest < ActiveSupport::TestCase
     end
   end
 
+  test 'presenter class scope can be accessed in block' do
+    presenter = Class.new do
+      extend HALPresenter
+
+      def self.some_presenter_class_method
+        'string from class method'
+      end
+
+      collection of: 'stuff' do
+        link :foo, some_presenter_class_method
+        link :bar do
+          some_presenter_class_method
+        end
+      end
+    end
+
+    actual = JSON.parse(presenter.to_collection([]))
+    expected = {
+      _links: {
+        foo: {
+          href: 'string from class method'
+        },
+        bar: {
+          href: 'string from class method'
+        }
+      },
+      _embedded: {
+        'stuff': []
+      }
+    }
+
+    assert_sameish_hash(expected, actual)
+  end
 end
