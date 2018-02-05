@@ -5,9 +5,9 @@ module HALPresenter
     class Embed < HALPresenter::Property
       attr_reader :presenter_class
 
-      def initialize(name, value = nil, presenter_class: nil, &block)
+      def initialize(name, value = nil, presenter_class: nil, decorator_class: nil, &block)
         super(name, value, &block)
-        @presenter_class = presenter_class
+        @presenter_class = presenter_class || decorator_class
       end
     end
 
