@@ -1,3 +1,6 @@
+## 0.4.2
+ * Link policies without curies also applies to links with curies
+ * Always serialize curies when present (policies does not need to allow curies).
 ## 0.4.1
  * Policies created with HALDecorator::Policy::DSL now always allows links with rel `self`.
  * Policy is now used in collection blocks as well.
