@@ -33,7 +33,8 @@ module HALPresenter
         end
 
         def link_rule_for(rel)
-          links[rel]
+          return links[rel] if links.key? rel
+          links[strip_curie(rel)]
         end
 
         def add_link(rel, block)
@@ -46,6 +47,10 @@ module HALPresenter
 
         def add_embed(name, block)
           embedded[name] = block
+        end
+
+        def strip_curie(rel)
+          rel.to_s.split(':', 2)[1]&.to_sym
         end
 
       end
