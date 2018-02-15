@@ -160,7 +160,7 @@ Instances of the class registered with this method needs to respond to the follo
 - `link?(rel)`
 - `embed?(name)`  
 Additional methods will be needed for authorization in controller. Such as `create?`, `update?` etc when using Pundit.
-A policy instance will be instantiated with the resource being serialized and the option `:current_user` passed to `to_hal`. For each attribute being serialized a call to `policy_instance.attribute?(name)` will be made. If that call returns `true` then the attribute will be serialized. Else it will not end up in the serialized payload. Same goes for links and embedded resources. Note that `link?(rel)` is used to discard both normal links and curies.
+A policy instance will be instantiated with the resource being serialized and the option `:current_user` passed to `to_hal`. For each attribute being serialized a call to `policy_instance.attribute?(name)` will be made. If that call returns `true` then the attribute will be serialized. Else it will not end up in the serialized payload. Same goes for links and embedded resources. Curies are ignored by policies and always serialized.
 Using the following Policy would discard everything except a title attribute, the self link and embedded resources named foo.
 ``` ruby
 class SomePolicy

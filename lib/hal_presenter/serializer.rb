@@ -119,7 +119,6 @@ module HALPresenter
 
     def _serialize_curies(curies, resource, policy, options)
       curies.each_with_object([]) do |curie, array|
-        next if policy && !policy.link?(curie.name)
         href = curie.value(resource, options) or next
         array << {
           name: curie.name,

@@ -111,7 +111,7 @@ class SerializerTest < ActiveSupport::TestCase
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
-  test 'Policy is honored' do
+  test 'Policy is honored (and curies are shown)' do
     class Policy
       def initialize(*); end
 
@@ -137,7 +137,14 @@ class SerializerTest < ActiveSupport::TestCase
       _links: {
         self: {
           href: '/items/5'
-        }
+        },
+        curies: [
+          {
+            name: 'doc',
+            href: '/some/templated/uri/{rel}',
+            templated: true
+          }
+        ],
       },
       _embedded: {
         parent: {
