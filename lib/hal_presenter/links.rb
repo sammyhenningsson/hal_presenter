@@ -44,7 +44,7 @@ module HALPresenter
     private
 
     def init_links
-      return [] unless is_a? Class
+      return [] unless Class === self
       return [] unless superclass.respond_to?(:links, true)
       superclass.links.each do |link|
         link.change_scope(self)

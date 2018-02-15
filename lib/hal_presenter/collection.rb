@@ -47,7 +47,7 @@ module HALPresenter
     private
 
     def init_collection_params
-      return unless is_a? Class
+      return unless Class === self
       if superclass.respond_to?(:collection_parameters, true)
         superclass.collection_parameters
       end

@@ -20,7 +20,7 @@ module HALPresenter
     private
 
     def init_curies
-      return [] unless is_a? Class
+      return [] unless Class === self
       return [] unless superclass.respond_to?(:curies, true)
       superclass.curies.each do |curie|
         curie.change_scope(self)

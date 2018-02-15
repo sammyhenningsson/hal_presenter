@@ -14,7 +14,7 @@ module HALPresenter
     private
 
     def init_policy
-      return unless is_a? Class
+      return unless Class === self
       return unless superclass.respond_to?(:policy_class, true)
       superclass.policy_class
     end

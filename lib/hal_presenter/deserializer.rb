@@ -52,15 +52,15 @@ module HALPresenter
         next unless resource.respond_to? setter_method
         presenter = embed.presenter_class or next
 
-        embedded_hash = hash.dig('_embedded', embed.name.to_s)
-        next unless embedded_hash&.any?
+        _embedded = hash.dig('_embedded', embed.name.to_s)
+        next unless _embedded&.any?
 
         embedded_resource = resource.public_send(embed.name)
         embedded_resource = 
-          if embedded_hash.is_a? Array
-            embedded_hash.map { |h| presenter.from_hash(h, embedded_resource) }
+          if Array === _embedded
+            _embedded.map { |h| presenter.from_hash(h, embedded_resource) }
           else
-            presenter.from_hash(embedded_hash, embedded_resource)
+            presenter.from_hash(_embedded, embedded_resource)
           end
         resource.public_send(setter_method, embedded_resource)
       end

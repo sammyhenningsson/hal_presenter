@@ -4,7 +4,7 @@ module Minitest
   module Assertions
     def assert_sameish_hash(expected, actual, msg = nil)
       assert(
-        expected.is_a?(Hash) && actual.is_a?(Hash),
+        Hash === expected && Hash === actual,
         'Inputs must be instances of Hash'
       )
 
@@ -22,11 +22,12 @@ module Minitest
     private
 
     def stringify_keys(object)
-      if object.is_a? Hash
+      case object
+      when Hash
         object.each_with_object({}) do |(key, value), result|
           result[key.to_s] = stringify_keys value
         end
-      elsif object.is_a? Array
+      when Array
         object.map { |obj| stringify_keys obj }
       else
         object

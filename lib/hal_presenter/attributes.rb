@@ -17,7 +17,7 @@ module HALPresenter
     private
 
     def init_attributes
-      return [] unless is_a? Class
+      return [] unless Class === self
       return [] unless superclass.respond_to?(:attributes, true)
       superclass.attributes.each do |attr|
         attr.change_scope(self)

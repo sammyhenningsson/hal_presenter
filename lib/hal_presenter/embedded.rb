@@ -26,7 +26,7 @@ module HALPresenter
     private
 
     def init_embedded
-      return [] unless is_a? Class
+      return [] unless Class === self
       return [] unless superclass.respond_to?(:embedded, true)
       superclass.embedded.each do |embed|
         embed.change_scope(self)
