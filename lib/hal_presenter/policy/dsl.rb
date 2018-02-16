@@ -42,7 +42,8 @@ module HALPresenter
         end
 
         def embed_rule_for(name)
-          embedded[name]
+          return embedded[name] if embedded.key? name
+          embedded[strip_curie(name)]
         end
 
         def add_embed(name, block)
