@@ -1,3 +1,5 @@
+## 0.4.3
+ * Embed policies without curies also applies to rels with curies
 ## 0.4.2
  * Link policies without curies also applies to links with curies
  * Always serialize curies when present (policies does not need to allow curies).
