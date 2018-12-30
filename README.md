@@ -24,7 +24,9 @@ $ bundle
 
 ### Name changed from HALDecorator to HALPresenter
 Since serializers created using this gem actually follow the presenter pattern rather than the decorator pattern, it felt appropriate to rename the gem.
-If you are upgrading from hal_decorator <= 0.3.6 then, all that is required is to install hal_presenter version >=0.4.1 and change all occurencies of `require 'hal_decorator'` to `require 'hal_presenter'`. For backwards compatibility with serializers written with hal_decorator, the `HALDecorator` module will still be available when you require `hal_presenter`. Though, this will probably be removed in the future so you might want to update your serializer files. The following commands may be of great help:
+Version 0.5.0 drops backward compatibility with the old `HALDecorator` module and all occurrences of must now be replaced with `HALPresenter`.
+Also change all occurrences of `require 'hal_decorator'` to `require 'hal_presenter'`.  
+The following commands may be of great help:
 ```sh
 grep -rl Decorator . | xargs sed -i "s/Decorator/Presenter/g"
 grep -rl decorator . | xargs sed -i "s/decorator/presenter/g"

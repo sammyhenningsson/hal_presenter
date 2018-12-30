@@ -22,12 +22,3 @@ module HALPresenter
   include HALPresenter::Deserializer
   include HALPresenter::Policy
 end
-
-# Keeping this module for backward compatibility!
-module HALDecorator
-  include HALPresenter
-
-  def self.method_missing(m, *args, &block)
-    HALPresenter.send(m, *args, &block)
-  end
-end
