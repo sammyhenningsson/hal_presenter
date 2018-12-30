@@ -3,7 +3,7 @@ require 'hal_presenter/property'
 module HALPresenter
   module Collection
 
-    class CollectionParameters
+    class Properties
       include Attributes
       include Links
       include Curies
@@ -31,25 +31,25 @@ module HALPresenter
     end
 
     def collection(of:, &block)
-      @_parameters = CollectionParameters.new(of, self, &block)
+      @_collection_properties = Properties.new(of, self, &block)
     end
 
     protected
 
-    def collection_parameters
-      @_parameters ||= init_collection_params
+    def collection_properties
+      @_collection_properties ||= init_collection_params
     end
 
     def can_serialize_collection?
-      !collection_parameters.nil?
+      !collection_properties.nil?
     end
 
     private
 
     def init_collection_params
       return unless Class === self
-      if superclass.respond_to?(:collection_parameters, true)
-        superclass.collection_parameters
+      if superclass.respond_to?(:collection_properties, true)
+        superclass.collection_properties
       end
     end
   end

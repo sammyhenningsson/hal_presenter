@@ -16,12 +16,12 @@ module HALPresenter
 
     class Link < HALPresenter::Property
       attr_reader :http_method
-      def initialize(rel, value = nil, http_method: nil, &block)
+      def initialize(rel, value = nil, **kw_args, &block)
         if value.nil? && !block_given?
           raise 'link must be called with non nil value or be given a block'
         end
-        @http_method = http_method
-        super(rel, value, &block)
+        @http_method = kw_args.delete(:method) || kw_args.delete(:methods)
+        super(rel, value, **kw_args, &block)
       end
 
       def rel
@@ -29,10 +29,10 @@ module HALPresenter
       end
     end
 
-    def link(rel, value = nil, method: nil, methods: nil, &block)
+    def link(rel, value = nil, **kw_args, &block)
       @_links ||= init_links
       @_links = @_links.reject { |link| link.rel == rel }
-      @_links << Link.new(rel, value, http_method: method || methods, &block)
+      @_links << Link.new(rel, value, **kw_args, &block)
     end
 
     protected

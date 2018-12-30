@@ -207,19 +207,31 @@ class SerializerTest < ActiveSupport::TestCase
     c = Class.new do
       extend HALPresenter
       link :self, '/grandchild'
-      attribute(:data) { resource.data }
+      link :foo, '/grand_foo', embed_depth: 1
+      attribute :data
+      attribute :c, 'c', embed_depth: 2
+      attribute :c0, 'c0', embed_depth: 0
+      attribute :c1, 'c1', embed_depth: 1
+      attribute :c2, 'c2', embed_depth: 2
+      attribute :c3, 'c3', embed_depth: 3
     end
     b = Class.new do
       extend HALPresenter
       link :self, '/child'
-      attribute(:data) { resource.data }
+      link :foo, '/foo', embed_depth: 1
+      attribute :data
+      attribute :b0, 'b0', embed_depth: 0
+      attribute :b1, 'b1', embed_depth: 1
+      attribute :b2, 'b2', embed_depth: 2
       embed :child, presenter_class: c
+
     end
     a = Class.new do
       extend HALPresenter
       link :self, '/'
-      attribute(:data) { resource.data }
-      embed :child, presenter_class: b
+      attribute :data
+      attribute :a0, 'a0', embed_depth: 0
+      embed :child, presenter_class: b, embed_depth: nil
     end
 
     obj = OpenStruct.new(
@@ -234,6 +246,7 @@ class SerializerTest < ActiveSupport::TestCase
 
     expected = {
       data: 'parent',
+      a0: 'a0',
       _links: {
         self: {
           href: '/'
@@ -242,14 +255,22 @@ class SerializerTest < ActiveSupport::TestCase
       _embedded: {
         child: {
           data: 'child',
+          b1: 'b1',
+          b2: 'b2',
           _links: {
             self: {
               href: '/child'
+            },
+            foo: {
+              href: '/foo'
             }
           },
           _embedded: {
             child: {
               data: 'grandchild',
+              c: 'c',
+              c2: 'c2',
+              c3: 'c3',
               _links: {
                 self: {
                   href: '/grandchild'

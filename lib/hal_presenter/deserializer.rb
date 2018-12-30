@@ -67,7 +67,7 @@ module HALPresenter
     end
 
     def deserialize_collection(hash, resource)
-      hash['_embedded'][collection_parameters.name].each do |resource_hash|
+      hash['_embedded'][collection_properties.name].each do |resource_hash|
         resource << from_hash(resource_hash, nil)
       end
     end
@@ -75,7 +75,7 @@ module HALPresenter
     private
 
     def deserialize_as_collection?(hash)
-      name = collection_parameters&.name
+      name = collection_properties&.name
       # return true/false (Hash#key? returns nil if not found..)
       name && hash['_embedded']&.key?(name) || false
     end

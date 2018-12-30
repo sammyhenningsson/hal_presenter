@@ -1,12 +1,13 @@
 module HALPresenter
   class Property
-    attr_reader :name, :resource, :options
+    attr_reader :name, :resource, :embed_depth, :options
 
     alias :resources :resource
 
-    def initialize(name, value = nil, &block)
+    def initialize(name, value = nil, embed_depth: nil, &block)
       @name = name
       @value = value
+      @embed_depth = embed_depth
       @scope = nil
       return unless block_given?
       @scope = eval 'self', block.binding

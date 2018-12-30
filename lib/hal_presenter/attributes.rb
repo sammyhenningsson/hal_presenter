@@ -2,10 +2,10 @@ require 'hal_presenter/property'
 
 module HALPresenter
   module Attributes
-    def attribute(*args, &block)
+    def attribute(*args, **kw_args, &block)
       @_attributes ||= init_attributes
       @_attributes = @_attributes.reject { |attr| attr.name == args.first }
-      @_attributes << Property.new(*args, &block)
+      @_attributes << Property.new(*args, **kw_args, &block)
     end
 
     protected

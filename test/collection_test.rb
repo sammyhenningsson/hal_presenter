@@ -126,7 +126,7 @@ class CollectionTest < ActiveSupport::TestCase
     end
   end
 
-  test 'to_collection raises execption when no collection_parameters' do
+  test 'to_collection raises execption when no collection_properties' do
     class PresenterWithoutCollection
       extend HALPresenter
 

@@ -146,8 +146,8 @@ class DSLTest < ActiveSupport::TestCase
       curie :collection_curie, '/'
     end
 
-    collection = @serializer.send(:collection_parameters)
-    assert_instance_of HALPresenter::Collection::CollectionParameters, collection
+    collection = @serializer.send(:collection_properties)
+    assert_instance_of HALPresenter::Collection::Properties, collection
     assert_equal 'items', collection.name
     assert_equal 1, collection.send(:attributes).size
     assert_equal 1, collection.send(:links).size
