@@ -122,10 +122,10 @@ Then `Post` instances can be serialized with `HALPresenter.to_hal(post)` which w
 Serializers are defined by extending `HALPresenter` in the begining of the class declaration. This will add the following class methods:
 - [`::model(clazz)`](#model)
 - [`::policy(clazz)`](#policy)
-- [`::attribute(name, value = nil, &block)`](#attribute)
-- [`::link(rel, value = nil, &block)`](#link)
-- [`::curie(rel, value = nil, &block)`](#curie)
-- [`::embed(name, value = nil, presenter_class: nil, &block)`](#embed)
+- [`::attribute(name, value = nil, embed_depth: nil, &block)`](#attribute)
+- [`::link(rel, value = nil, embed_depth: nil, &block)`](#link)
+- [`::curie(rel, value = nil, embed_depth: nil, &block)`](#curie)
+- [`::embed(name, value = nil, embed_depth: nil, presenter_class: nil, &block)`](#embed)
 - [`::collection`](#collection)
 - [`::to_hal(resource = nil, options = {})`](#to_hal)
 - [`::to_collection(resources = [], options = {})`](#to_collection)
@@ -189,6 +189,7 @@ This gem includes a DSL that simplifies creating policies. See [`HALPresenter::P
 
 ### ::attribute
 The `attribute` class method specifies an attribute (property) to be serialized. The first argument, `name`, is required and must be a symbol of the attribute name. When `::attribute` is called with only one argument, the resources being serialized are expected to respond to that argument and the returned value is what ends up in the payload.
+The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding attribute to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).
 ``` ruby
 class PostSerializer
   extend HALPresenter
@@ -221,6 +222,7 @@ Notice that the object being serialized (`post` in the above example) is accessi
 
 ### ::link
 The `link` class method specifies a link to be added to the _\_links_ property. The first argument, `rel`, is required. `::link` must be called with either a second argument (`value`) or a block.
+The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding link to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).
 ``` ruby
 class PostSerializer
   extend HALPresenter
@@ -242,6 +244,7 @@ PostSerializer.to_hal(post)   # => {"_links": {"self": {"href": "/posts/5"}}}
 
 ### ::curie
 The `curie` class method specifies a curie to be added to the _curies_ list. The first argument, `rel`, is required. `::curie` must be called with either a second argument (`value`) or a block.
+The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding curie to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).
 ``` ruby
 class PostSerializer
   extend HALPresenter
@@ -263,6 +266,7 @@ PostSerializer.to_hal(post)   # => {"_links":{"doc:user":{"href":"/users/5"},"cu
 
 ### ::embed
 The `embed` class method specifies a nested resource to be embedded. The first argument, `name`, is required and must be a symbol. When `::embed` is called with only one argument, the resource being serialized is expected to respond to the value of that argument and the returned value is what ends up in the payload. The keyword argument `presenter_class` specifies the serializer to be used for serializing the embedded resource.
+The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding resource to be embedded. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).
 ``` ruby
 class UserSerializer
   extend HALPresenter
@@ -321,7 +325,6 @@ end
 post = OpenStruct.new(title: "hello", author: User.new)
 PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 ```
-
 ### collection
 The `collection` class method is used to make a serializer capable of serializing an array of resources. Serializing collections may of course be done with separate serializer, but should we want to use the same serializer class for both then `::collection` will make that work. The method takes a required keyword paramter named `:of`, which will be used as the key in the corresponding _\_embedded_ property. Each entry in the array given to `::to_collection` will then be serialized with this serializer.
 ``` ruby
@@ -385,7 +388,64 @@ The response above with some newlines.
 ```
 Note: the block given to the `:number_of_posts` attribute is using the method `resources`. This is just and alias for `resource` which looks better inside collections. 
 
-#### blocks passed to ::attribute, ::link, ::curie, ::embed and ::collection
+#### Keyword argument `:embed_depth` passed to `::attribute`, `::link`, `::curie` and `::embed`
+The `:embed_depth` keyword arguments specifies for which levels of embedding the correponding property should be serialized.
+ - `nil`: The property it is always serialized.
+ - `0`: The property is only serialized when the resource is not embedded.
+ - `1`: The property is serialized when it's embedded at most 1 level deep.
+ - etc..
+
+Consider the following payload representing a post resource:
+```sh
+{
+  "id": 1,
+  "message": "lorem ipsum..",
+  "_links": {
+    "self": {
+      "href": "/posts/1"
+    },
+  },
+  "_embedded": {
+    "comments": [
+      {
+        "id": 1,
+        "comment": "hello1"
+        "_embedded": {
+          "user": {
+            "id": 2,
+            "name": "foo",
+            "_links": {
+              "self": {
+                "href": "/users/2"
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "comment": "hello2"
+        "_embedded": {
+          "user": {
+            "id": 3,
+            "name": "foo",
+            "_links": {
+              "self": {
+                "href": "/users/3"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}
+```
+Here the post attributes `id`, `message` as well as the _self_ link and the embedded comments all have a depth of 0. The properties of each embedded comment (attributes `id`, `comment` and embedded user) have a depth of 1. The properties of the user resources (embedded in the comments, which in turn are embedded in the post resource) have a depth of 2.  
+The purpose of specifying `embed_depth` is to be able skip serializing properties when embeddeed.  
+For example, when you serialize a collection of resources, perhaps you would like for each resource in that collection to only serialize a few properties, making it kind of like a "preview" of each resource.
+
+#### blocks passed to `::attribute`, `::link`, `::curie`, `::embed` and `::collection`
 Blocks passes to `::attribute`, `::link`, `::curie` and `::embed` have access to the resource being serialized throught the `resource` method. These blocks also have access to an optional `options` hash that can be passed to `::to_hal`.
 ``` ruby
 class PostSerializer
