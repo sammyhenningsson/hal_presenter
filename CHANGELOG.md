@@ -1,3 +1,6 @@
+## 0.5.0
+ * Add embed_depth option for properties.
+ * Drop deprecated decorator syntax.
 ## 0.4.3
  * Embed policies without curies also applies to rels with curies
 ## 0.4.2
