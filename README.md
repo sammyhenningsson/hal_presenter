@@ -1,8 +1,8 @@
 # HALPresenter
 [![Gem Version](https://badge.fury.io/rb/hal_presenter.svg)](https://badge.fury.io/rb/hal_presenter)
 
-HALPresenter is a DSL for creating serializers conforming to [JSON HAL](http://stateless.co/hal_specification.html). This DSL is highly influenced by ActiveModelSerializers. My first attempted was actually to create a HAL adapter for ActiveModelSerializers. After messing around with that, I realized that it was just too messy and slow, so I decided to start over. This gem has no dependencies on other gems and will happily serialize instances of ActiveRecord, Sequel or simply POROs (most examples here will use instances of `OpenStruct` as the resource to be serialized).  
-I've done some simple benchmarks against using an ActiveModelSerializers adapter and HAL and its about 5 times faster (read this with a grain of salt, I might have missed some optimizations in my adapter).  
+HALPresenter is a DSL for creating serializers conforming to [JSON HAL](http://stateless.co/hal_specification.html). This DSL is highly influenced by ActiveModelSerializers.
+Check out [this benchmark](https://gist.github.com/sammyhenningsson/890f7e4d6967883666851eb6aab92adb) for a comparison to other serializers.  
 So, generating some json from an object, whats the big deal? Well if your API is not driven by hypermedia and your payloads most of the time just looks the same, then this might be overkill. But if you do have dynamic payloads (e.g the payload attributes and links depend on the context) then this gem greatly simplifies serialization and puts all the serialization logic in one place.
 This documentation might be a bit long and dull, but skim through it and check out the examples. I think you'll get the hang of it.  
 
@@ -133,7 +133,7 @@ Serializers are defined by extending `HALPresenter` in the begining of the class
 - [`::from_hal(payload, resource = nil)`](#from_hal)
 
 ### ::model
-The `model` class method is used to register the resource Class that this serializer handles. (Theres no Rails magic that automagically maps models to serializers.)
+The `model` class method is used to register the resource Class that this serializer handles. (There's no Rails magic that automagically maps models to serializers.)
 ``` ruby
 class PostSerializer
   extend HALPresenter
@@ -162,7 +162,8 @@ Instances of the class registered with this method needs to respond to the follo
 - `initialize(current_user, resource, options = {})`
 - `attribute?(name)`
 - `link?(rel)`
-- `embed?(name)`  
+- `embed?(name)`
+
 Additional methods will be needed for authorization in controller. Such as `create?`, `update?` etc when using Pundit.
 A policy instance will be instantiated with the resource being serialized and the option `:current_user` passed to `::to_hal`. For each attribute being serialized a call to `policy_instance.attribute?(name)` will be made. If that call returns `true` then the attribute will be serialized. Else it will not end up in the serialized payload. Same goes for links and embedded resources. Curies are ignored by policies and always serialized.
 Using the following Policy would discard everything except a title attribute, the self link and embedded resources named foo.
@@ -189,7 +190,6 @@ This gem includes a DSL that simplifies creating policies. See [`HALPresenter::P
 
 ### ::attribute
 The `attribute` class method specifies an attribute (property) to be serialized. The first argument, `name`, is required and must be a symbol of the attribute name. When `::attribute` is called with only one argument, the resources being serialized are expected to respond to that argument and the returned value is what ends up in the payload.
-The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding attribute to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).
 ``` ruby
 class PostSerializer
   extend HALPresenter
@@ -207,6 +207,7 @@ end
 post = OpenStruct.new(title: "ignored")
 PostSerializer.to_hal(post)   # => {"title": "world"}
 ```
+The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding attribute to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).  
 When a block is passed to `::attribute`, then the return value of that block is what ends up in the payload.
 ``` ruby
 class PostSerializer
@@ -222,7 +223,6 @@ Notice that the object being serialized (`post` in the above example) is accessi
 
 ### ::link
 The `link` class method specifies a link to be added to the _\_links_ property. The first argument, `rel`, is required. `::link` must be called with either a second argument (`value`) or a block.
-The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding link to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).
 ``` ruby
 class PostSerializer
   extend HALPresenter
@@ -230,6 +230,7 @@ class PostSerializer
 end
 PostSerializer.to_hal   # => {"_links": {"self": {"href": "/posts/1"}}}
 ```
+The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding link to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).  
 When a block is passed to `::link`, the return value of that block is what ends up as the href of the link.
 ``` ruby
 class PostSerializer
@@ -244,7 +245,6 @@ PostSerializer.to_hal(post)   # => {"_links": {"self": {"href": "/posts/5"}}}
 
 ### ::curie
 The `curie` class method specifies a curie to be added to the _curies_ list. The first argument, `rel`, is required. `::curie` must be called with either a second argument (`value`) or a block.
-The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding curie to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).
 ``` ruby
 class PostSerializer
   extend HALPresenter
@@ -253,6 +253,7 @@ class PostSerializer
 end
 PostSerializer.to_hal   # => {"_links":{"doc:user":{"href":"/users/5"},"curies":[{"name":"doc","href":"/api/docs/{rel}","templated":true}]}}
 ```
+The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding curie to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).  
 When a block is passed to `::curie`, the return value of that block is what ends up as the href of the curie.
 ``` ruby
 class PostSerializer
@@ -266,7 +267,6 @@ PostSerializer.to_hal(post)   # => {"_links":{"doc:user":{"href":"/users/5"},"cu
 
 ### ::embed
 The `embed` class method specifies a nested resource to be embedded. The first argument, `name`, is required and must be a symbol. When `::embed` is called with only one argument, the resource being serialized is expected to respond to the value of that argument and the returned value is what ends up in the payload. The keyword argument `presenter_class` specifies the serializer to be used for serializing the embedded resource.
-The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding resource to be embedded. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).
 ``` ruby
 class UserSerializer
   extend HALPresenter
@@ -293,6 +293,7 @@ end
 post = OpenStruct.new(title: "hello")
 PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 ```
+The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding resource to be embedded. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).  
 When a block is passed to `::embed`, then the return value of that block is embedded.
 ``` ruby
 class UserSerializer
@@ -809,7 +810,8 @@ Setting `HALPresenter.paginate = true` will add next/prev links for collections 
 HALPresenter includes a DSL for creating polices. By including `HALPresenter::Policy::DSL` into your policy class you get the following class methods:
 - `::attribute(*names, &block)`
 - `::link(*rels, &block)`
-- `::embed(*names, &block)`  
+- `::embed(*names, &block)`
+
 These methods all work the same way and creates one or more rules for each `name` argument (`rel` for links). If no block is given then the corresponding attribute/link/embedded resource will always be serialized. If the block evaluates to `true` then the attribute/link/embedded resource will be serialized. Otherwise it will not be serialized. The block has access to the current user, the resource that is being serialized, as well as any options passed to `::to_hal` from the methods `current_user`, `resource` resp. `options`.
 ```ruby
 class UserPolicy
