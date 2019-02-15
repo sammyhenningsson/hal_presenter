@@ -286,6 +286,19 @@ class SerializerTest < ActiveSupport::TestCase
     assert_sameish_hash(expected, JSON.parse(payload))
   end
 
+  test 'subclasses of a registered model will use the same presenter' do
+    grand_child_class = Class.new(Child)
+    grand_child = grand_child_class.new('title', 'some data')
+    HALPresenter.to_hal(grand_child).itself do |payload|
+      assert_sameish_hash(
+        {
+          data: 'some_data'
+        },
+        JSON.parse(payload)
+      )
+    end
+  end
+
   test 'inheritance of model' do
     foo = Class.new(Child) do
       def f; 'F'; end

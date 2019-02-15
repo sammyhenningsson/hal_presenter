@@ -16,7 +16,8 @@ module HALPresenter
   def HALPresenter.lookup_presenter(model)
     clazz = model.is_a?(Class) ? model : model.class
     presenters = @presenters.select { |d, m| m == clazz }.keys.compact
-    presenters.empty? ? nil : presenters
+    return presenters unless presenters.empty?
+    lookup_presenter(clazz.superclass) unless clazz.superclass == BasicObject
   end
 
   module Model
