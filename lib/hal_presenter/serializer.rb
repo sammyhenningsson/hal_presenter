@@ -7,7 +7,7 @@ module HALPresenter
     raise Serializer::Error, "Resource is nil" if resource.nil?
     presenter = options.delete(:presenter)
     presenter ||= HALPresenter.lookup_presenter(resource)&.last
-    raise Serializer::Error, "No presenter for #{resource}" unless presenter
+    raise Serializer::Error, "No presenter for #{resource.class}" unless presenter
     presenter.to_hal(resource, options)
   end
 
@@ -15,7 +15,7 @@ module HALPresenter
     raise Serializer::Error, "resources is nil" if resources.nil?
     presenter = options.delete(:presenter)
     presenter ||= HALPresenter.lookup_presenter(resources.first)&.last
-    raise Serializer::Error, "No presenter for #{resources.first}" unless presenter
+    raise Serializer::Error, "No presenter for #{resources.first.class}" unless presenter
     presenter.to_collection(resources, options)
   end
 
