@@ -1,3 +1,5 @@
+## 0.6.0
+ * Lookup Presenter from superclass
 ## 0.5.0
  * Add embed_depth option for properties.
  * Drop deprecated decorator syntax.
