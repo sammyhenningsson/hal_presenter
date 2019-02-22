@@ -13,7 +13,7 @@ gem install hal_presenter
 With Gemfile:
 
 ```sh
-gem 'hal_presenter', '~>0.4.3'
+gem 'hal_presenter', '~>0.6.0'
 ```
 
 And then execute:
@@ -140,11 +140,19 @@ class PostSerializer
   model Post
 end
 ```
-This make it possible to serialize `Post` instances with `HALPresenter.to_hal`. HALPresenter will then delegate the serialization to `PostSerializer`.
+This make it possible to serialize `Post` instances with `HALPresenter.to_hal`. HALPresenter will then lookup the right presenter and delegate the serialization to id 
+(which in the case above would be `PostSerializer`).
 ``` ruby
 post = Post.new(*args)
 HALPresenter.to_hal(post)
 ```
+If a model does not have it's own presenter but one of its superclasses does, then that will be used.
+``` ruby
+class SubPost < Post; end
+sub_post = SubPost.new(*args)
+HALPresenter.to_hal(sub_post) # will lookup PostSerializer since there isn't a specific one for SubPost
+```
+
 Using the `model` class method is not required for serialization. The serializer can also be called directly.
 ``` ruby
 PostSerializer.to_hal(post)
