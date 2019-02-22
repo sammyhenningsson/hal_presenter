@@ -170,7 +170,7 @@ module HALPresenter
     end
 
     def policy_for(resource, options)
-      policy = policy_class&.new(options[:current_user], resource, options)
+      policy_class&.new(options[:current_user], resource, options)
     end
 
     def nested_depth_ok?(property, level)
