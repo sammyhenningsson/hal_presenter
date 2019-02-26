@@ -63,13 +63,21 @@ class DSLTest < ActiveSupport::TestCase
     assert_equal 'string_from_block' , link.value(@obj)
   end
 
-  test 'link with http method' do
-    @serializer.link(:with_method, method: :put) { 'resource/1/edit' }
+  test 'link with title' do
+    @serializer.link(:with_method, title: 'hello') { 'resource/1/edit' }
     link = @serializer.send(:links).first
     assert_instance_of HALPresenter::Links::Link, link
     assert_equal :with_method, link.name
     assert_equal 'resource/1/edit' , link.value(@obj)
-    assert_equal :put, link.http_method
+    assert_equal 'hello', link.title
+  end
+
+  test 'link with deprecation' do
+    @serializer.link(:with_deprecation, deprecation: true) { 'resource/1/edit' }
+    link = @serializer.send(:links).first
+    assert_instance_of HALPresenter::Links::Link, link
+    assert_equal 'resource/1/edit' , link.value(@obj)
+    assert link.deprecation
   end
 
   test 'link must have a constant or block' do

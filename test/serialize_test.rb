@@ -34,7 +34,7 @@ class SerializerTest < ActiveSupport::TestCase
     link :self do
       "/items/#{resource.id}"
     end
-    link :edit, method: :put do
+    link :edit, title: 'Redigera' do
       options[:edit_uri] || '/items/5/edit'
     end
     link :'doc:user', '/some/uri/with/namespace'
@@ -71,7 +71,7 @@ class SerializerTest < ActiveSupport::TestCase
         },
         edit: {
           href: '/items/5/edit',
-          method: 'put',
+          title: 'Redigera',
         },
         'doc:user': {
           href: '/some/uri/with/namespace'

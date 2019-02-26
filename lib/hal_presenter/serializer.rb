@@ -112,10 +112,7 @@ module HALPresenter
       serialized = links.each_with_object({}) do |link, hash|
         next unless nested_depth_ok?(link, options[:_depth])
         next if policy && !policy.link?(link.rel)
-        href = link.value(resource, options) or next
-        hash[link.rel] = { href: HALPresenter.href(href) }.tap do |s|
-          s[:method] = link.http_method if link.http_method
-        end
+        hash.merge! link.to_h(resource, options)
       end
       curies = _serialize_curies(curies, resource, policy, options)
       serialized[:curies] = curies if curies.any?

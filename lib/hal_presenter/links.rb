@@ -15,35 +15,55 @@ module HALPresenter
   module Links
 
     class Link < HALPresenter::Property
-      attr_reader :http_method
-      def initialize(rel, value = nil, **kw_args, &block)
+      attr_reader :type, :deprecation, :profile, :title
+      attr_accessor :templated
+
+      def initialize(rel, value = nil, **kwargs, &block)
         if value.nil? && !block_given?
           raise 'link must be called with non nil value or be given a block'
         end
-        @http_method = kw_args.delete(:method) || kw_args.delete(:methods)
-        super(rel, value, **kw_args, &block)
+        @type =         kwargs[:type]
+        @deprecation =  kwargs[:deprecation]
+        @profile =      kwargs[:profile]
+        @title =        kwargs[:title]
+        super(rel, value, embed_depth: kwargs[:embed_depth], &block)
       end
 
       def rel
         name
       end
+
+      def to_h(resource = nil, options = {})
+        href = value(resource, options)
+        return {} unless href
+
+        hash = {href: HALPresenter.href(href)}.tap do |h|
+          h[:type] = type if type
+          h[:deprecation] = deprecation if deprecation
+          h[:profile] = profile if profile
+          h[:title] = title if title
+          h[:templated] = templated if templated
+        end
+
+        {rel => hash}
+      end
     end
 
-    def link(rel, value = nil, **kw_args, &block)
-      @_links ||= init_links
+    def link(rel, value = nil, **kwargs, &block)
+      @_links ||= __init_links
       @_links = @_links.reject { |link| link.rel == rel }
-      @_links << Link.new(rel, value, **kw_args, &block)
+      @_links << Link.new(rel, value, **kwargs, &block)
     end
 
     protected
 
     def links
-      @_links ||= init_links
+      @_links ||= __init_links
     end
 
     private
 
-    def init_links
+    def __init_links
       return [] unless Class === self
       return [] unless superclass.respond_to?(:links, true)
       superclass.links.each do |link|
