@@ -71,6 +71,7 @@ module HALPresenter
         serialized[:_embedded] = embedded[:_embedded] || {}
 
         # Embedded resources
+        options[:_depth] += 1
         serialized_resources = resources.map { |resource| to_hash(resource, options) }
         serialized[:_embedded].merge!({properties.name => serialized_resources })
       end
