@@ -86,7 +86,7 @@ module HALPresenter
     end
 
     def serialize_curies(resource, policy, options)
-      _serialize_curies(curies, resource, policy, options)
+      _serialize_curies(curies, resource, options)
     end
 
     def serialize_embedded(resource, policy, options)
@@ -114,21 +114,17 @@ module HALPresenter
         next if policy && !policy.link?(link.rel)
         hash.merge! link.to_h(resource, options)
       end
-      curies = _serialize_curies(curies, resource, policy, options)
+      curies = _serialize_curies(curies, resource, options)
       serialized[:curies] = curies if curies.any?
       return {} if serialized.empty?
       { _links: serialized }
     end
 
-    def _serialize_curies(curies, resource, policy, options)
+    def _serialize_curies(curies, resource, options)
       curies.each_with_object([]) do |curie, array|
         next unless nested_depth_ok?(curie, options[:_depth])
-        href = curie.value(resource, options) or next
-        array << {
-          name: curie.name,
-          href: HALPresenter.href(href),
-          templated: true
-        }
+        hash = curie.to_h(resource, options)
+        array << hash unless hash.empty?
       end
     end
 
@@ -177,5 +173,3 @@ module HALPresenter
     end
   end
 end
-
-

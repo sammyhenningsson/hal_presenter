@@ -89,7 +89,7 @@ class DSLTest < ActiveSupport::TestCase
   test 'curie with value from contant' do
     @serializer.curie :from_constant, 'some_string'.freeze
     curie = @serializer.send(:curies).last
-    assert_instance_of HALPresenter::Property, curie
+    assert_instance_of HALPresenter::Curie, curie
     assert_equal :from_constant, curie.name
     assert_equal 'some_string' , curie.value('ignore'.freeze)
   end
@@ -97,7 +97,7 @@ class DSLTest < ActiveSupport::TestCase
   test 'curie with value from block' do
     @serializer.curie(:from_block) { resource.from_block }
     curie = @serializer.send(:curies).first
-    assert_instance_of HALPresenter::Property, curie
+    assert_instance_of HALPresenter::Curie, curie
     assert_equal :from_block, curie.name
     assert_equal 'string_from_block' , curie.value(@obj)
   end
