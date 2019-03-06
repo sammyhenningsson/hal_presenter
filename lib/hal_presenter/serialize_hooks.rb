@@ -27,12 +27,12 @@ module HALPresenter
     protected
 
     def post_serialize_hook
-      @_post_serialize_hook ||= init_post_serialize_hook
+      @_post_serialize_hook ||= __init_post_serialize_hook
     end
 
     private
 
-    def init_post_serialize_hook
+    def __init_post_serialize_hook
       return unless Class === self
       return unless superclass.respond_to?(:post_serialize_hook, true)
       superclass.post_serialize_hook

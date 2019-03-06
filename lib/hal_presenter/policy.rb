@@ -8,12 +8,12 @@ module HALPresenter
     protected
 
     def policy_class
-      @_policy ||= init_policy
+      @_policy ||= __init_policy
     end
 
     private
 
-    def init_policy
+    def __init_policy
       return unless Class === self
       return unless superclass.respond_to?(:policy_class, true)
       superclass.policy_class

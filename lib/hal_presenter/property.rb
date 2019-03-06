@@ -22,9 +22,9 @@ module HALPresenter
       end
     end
 
-    def change_scope(new_scope)
+    def change_context(context)
       return unless @lazy
-      @lazy.update_scope(new_scope)
+      @lazy.update_context(context)
     end
   end
 end

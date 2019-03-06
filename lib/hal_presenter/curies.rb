@@ -15,28 +15,28 @@ module HALPresenter
       end
     end
 
-    def curie(rel, value = nil, **kw_args, &block)
+    def curie(rel, value = nil, embed_depth: nil, &block)
       if value.nil? && !block_given?
         raise 'curie must be called with non nil value or be given a block'
       end
-      @_curies ||= init_curies
+      @_curies ||= __init_curies
       @_curies = @_curies.reject { |curie| curie.name == rel }
-      @_curies << Curie.new(rel, value, **kw_args, &block)
+      @_curies << Curie.new(rel, value, embed_depth: embed_depth, &block)
     end
 
     protected
 
     def curies
-      @_curies ||= init_curies
+      @_curies ||= __init_curies
     end
 
     private
 
-    def init_curies
+    def __init_curies
       return [] unless Class === self
       return [] unless superclass.respond_to?(:curies, true)
       superclass.curies.each do |curie|
-        curie.change_scope(self)
+        curie.change_context(self)
       end
     end
   end

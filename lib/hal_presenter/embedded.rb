@@ -12,7 +12,7 @@ module HALPresenter
     end
 
     def embed(*args, **kw_args, &block)
-      @_embedded ||= init_embedded
+      @_embedded ||= __init_embedded
       @_embedded = @_embedded.reject { |embed| embed.name == args.first }
       @_embedded << Embed.new(*args, **kw_args, &block)
     end
@@ -20,16 +20,16 @@ module HALPresenter
     protected
 
     def embedded
-      @_embedded ||= init_embedded
+      @_embedded ||= __init_embedded
     end
 
     private
 
-    def init_embedded
+    def __init_embedded
       return [] unless Class === self
       return [] unless superclass.respond_to?(:embedded, true)
       superclass.embedded.each do |embed|
-        embed.change_scope(self)
+        embed.change_context(self)
       end
     end
   end

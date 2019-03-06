@@ -67,7 +67,7 @@ module HALPresenter
       return [] unless Class === self
       return [] unless superclass.respond_to?(:links, true)
       superclass.links.each do |link|
-        link.change_scope(self)
+        link.change_context(self)
       end
     end
   end

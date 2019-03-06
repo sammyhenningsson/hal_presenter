@@ -37,7 +37,7 @@ module HALPresenter
     protected
 
     def collection_properties
-      @_collection_properties ||= init_collection_params
+      @_collection_properties ||= __init_collection_params
     end
 
     def can_serialize_collection?
@@ -46,7 +46,7 @@ module HALPresenter
 
     private
 
-    def init_collection_params
+    def __init_collection_params
       return unless Class === self
       if superclass.respond_to?(:collection_properties, true)
         superclass.collection_properties
