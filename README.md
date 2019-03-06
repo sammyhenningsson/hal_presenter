@@ -123,7 +123,7 @@ Serializers are defined by extending `HALPresenter` in the begining of the class
 - [`::model(clazz)`](#model)
 - [`::policy(clazz)`](#policy)
 - [`::attribute(name, value = nil, embed_depth: nil, &block)`](#attribute)
-- [`::link(rel, value = nil, embed_depth: nil, &block)`](#link)
+- [`::link(rel, value = nil, **options, &block)`](#link)
 - [`::curie(rel, value = nil, embed_depth: nil, &block)`](#curie)
 - [`::embed(name, value = nil, embed_depth: nil, presenter_class: nil, &block)`](#embed)
 - [`::collection`](#collection)
@@ -179,15 +179,15 @@ Using the following Policy would discard everything except a title attribute, th
 class SomePolicy
   def initialize(current_user, resource, options = {})
   end
-  
+
   def attribute?(name)
     name.to_s == 'title'
   end
-  
+
   def link?(rel)
     rel == :self
   end
-  
+
   def embed?(name)
     name.to_s == 'foo'
   end
@@ -197,7 +197,7 @@ end
 This gem includes a DSL that simplifies creating policies. See [`HALPresenter::Policy::DSL`](#policy-dsl).
 
 ### ::attribute
-The `attribute` class method specifies an attribute (property) to be serialized. The first argument, `name`, is required and must be a symbol of the attribute name. When `::attribute` is called with only one argument, the resources being serialized are expected to respond to that argument and the returned value is what ends up in the payload.
+The `attribute` class method specifies an attribute (property) to be serialized. The first argument, `name`, is required and specifies the name of the attribute. When `::attribute` is called with only one argument, the resources being serialized are expected to respond to that argument and the returned value is what ends up in the payload.
 ``` ruby
 class PostSerializer
   extend HALPresenter
@@ -238,7 +238,13 @@ class PostSerializer
 end
 PostSerializer.to_hal   # => {"_links": {"self": {"href": "/posts/1"}}}
 ```
-The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding link to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).  
+The following options may be given to `::link`:
+- `embed_depth` - sets a max allowed nesting depth for the corresponding link to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).
+- `title` - a string used for labelling the link (e.g. in a user interface).
+- `type` - the media type of the resource returned after following this link.
+- `deprecation` - a URL providing information about the deprecation of this link.
+- `profile` - a URI that hints about the profile of the target resource.  
+
 When a block is passed to `::link`, the return value of that block is what ends up as the href of the link.
 ``` ruby
 class PostSerializer
@@ -272,9 +278,16 @@ end
 post = OpenStruct.new(id: 5)
 PostSerializer.to_hal(post)   # => {"_links":{"doc:user":{"href":"/users/5"},"curies":[{"name":"doc","href":"/api/docs/{rel}","templated":true}]}}
 ```
+When a resource is embedded in another resource (see below) all curies are added to the root resource. One benefit of this is that each curie only appear once in the output, instead of once for
+each embedded resource for instance. But be cautious, to not define curies with colliding names.
+For example, if you have two presenters `Foo` and `Bar` each with a curie named `doc` but pointing to different URIs, say `/foo/{rel}` resp. `/bar/{rel}`.
+Then if you make `Foo` embed resources serialized with `Bar` then a collision will occur and a single `doc` curie will be added, with either `/foo/{rel}` or `/bar/{rel}`
+as the target URI.
+To remedy this, give the curies different names.
+
 
 ### ::embed
-The `embed` class method specifies a nested resource to be embedded. The first argument, `name`, is required and must be a symbol. When `::embed` is called with only one argument, the resource being serialized is expected to respond to the value of that argument and the returned value is what ends up in the payload. The keyword argument `presenter_class` specifies the serializer to be used for serializing the embedded resource.
+The `embed` class method specifies a nested resource to be embedded. The first argument, `name`, is required. When `::embed` is called with only one argument, the resource being serialized is expected to respond to the value of that argument and the returned value is what ends up in the payload. The keyword argument `presenter_class` specifies the serializer to be used for serializing the embedded resource.
 ``` ruby
 class UserSerializer
   extend HALPresenter
@@ -479,7 +492,8 @@ post = OpenStruct.new(id: 5, title: "hello")
 PostSerializer.to_hal(post)   # => {"title":"Common stuff -- hello"}
 ```
 Note: this does not mean that `self` inside the block is the serializer class. The access to the serializer class methods is done by delegation.  
-If the block passed to `::attribute` returns `nil` then the serialized value will be `null`. If the block passed to link, curie or embed returns `nil`, then the corresponding property will not be serialized.
+If the block passed to `::attribute` evaluates to `nil` then the serialized value will be `null`. If the block passed to `::link`, `::curie` or `::embed` evaluates to `nil`,
+then the corresponding property will not be serialized.
 ``` ruby
 class PostSerializer
   extend HALPresenter
