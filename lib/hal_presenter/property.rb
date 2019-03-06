@@ -6,7 +6,7 @@ module HALPresenter
     attr_reader :name, :embed_depth
 
     def initialize(name, value = nil, embed_depth: nil, &block)
-      @name = name
+      @name = name.to_sym
       @value = value
       @embed_depth = embed_depth
       @lazy = block_given? && LazyEvaluator.new(block)
