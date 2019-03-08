@@ -1,5 +1,10 @@
+## 1.0.0
+ * Move embedded curies to root resource
+ * Symbolize names given to `::attribute`, `::link` and `::embed`
+ * Links can now have type, deprecation, profile and title
+ * Fix off-by-1 error for embed_depth in collections 
 ## 0.6.0
- * Lookup Presenter from superclass
+ * lookup presenter from superclass
 ## 0.5.0
  * Add embed_depth option for properties.
  * Drop deprecated decorator syntax.
