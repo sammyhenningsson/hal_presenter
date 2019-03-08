@@ -208,6 +208,8 @@ class SerializerTest < ActiveSupport::TestCase
       extend HALPresenter
       link :self, '/grandchild'
       link :foo, '/grand_foo', embed_depth: 1
+      curie :c, '/c/{rel}'
+      curie :a, '/a/{rel}'
       attribute :data
       attribute :c, 'c', embed_depth: 2
       attribute :c0, 'c0', embed_depth: 0
@@ -219,6 +221,7 @@ class SerializerTest < ActiveSupport::TestCase
       extend HALPresenter
       link :self, '/child'
       link :foo, '/foo', embed_depth: 1
+      curie :b, '/b/{rel}'
       attribute :data
       attribute :b0, 'b0', embed_depth: 0
       attribute :b1, 'b1', embed_depth: 1
@@ -229,6 +232,7 @@ class SerializerTest < ActiveSupport::TestCase
     a = Class.new do
       extend HALPresenter
       link :self, '/'
+      curie :a, '/a/{rel}'
       attribute :data
       attribute :a0, 'a0', embed_depth: 0
       embed :child, presenter_class: b, embed_depth: nil
@@ -250,7 +254,24 @@ class SerializerTest < ActiveSupport::TestCase
       _links: {
         self: {
           href: '/'
-        }
+        },
+        curies: [
+          {
+            name: 'a',
+            href: '/a/{rel}',
+            templated: true
+          },
+          {
+            name: 'b',
+            href: '/b/{rel}',
+            templated: true
+          },
+          {
+            name: 'c',
+            href: '/c/{rel}',
+            templated: true
+          }
+        ]
       },
       _embedded: {
         child: {

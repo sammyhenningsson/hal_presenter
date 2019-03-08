@@ -26,6 +26,7 @@ module HALPresenter
     def to_hal(resource = nil, options = {})
       options[:_depth] ||= 0
       hash = to_hash(resource, options)
+      move_curies_to_top! hash
       JSON.generate(hash)
     end
 
@@ -38,6 +39,7 @@ module HALPresenter
       options[:paginate] = HALPresenter.paginate unless options.key? :paginate
       options[:_depth] ||= 0
       hash = to_collection_hash(resources, options)
+      move_curies_to_top! hash
       JSON.generate(hash)
     end
 
@@ -93,12 +95,39 @@ module HALPresenter
       _serialize_embedded(embedded, resource, policy, options)
     end
 
+    private
+
+    def move_curies_to_top!(hash)
+      curies = {}
+      find_curies(hash).each do |curie|
+        name = curie[:name]
+        curies[name] = curie
+      end
+
+      return if curies.empty?
+
+      hash[:_links] ||= {}
+      hash[:_links][:curies] = curies.values
+    end
+
+    def find_curies(hash)
+      return [] if Hash(hash).empty?
+
+      curies = hash[:_links].delete(:curies) if hash.key? :_links
+      curies ||= []
+
+      hash.fetch(:_embedded, {}).values.each do |embedded|
+        collection = embedded.is_a?(Array) ? embedded : [embedded]
+        collection.each { |resrc| curies += find_curies(resrc) }
+      end
+
+      curies
+    end
+
     def run_post_serialize_hook!(resource, options, serialized)
       hook = post_serialize_hook
       hook&.run(resource, options, serialized)
     end
-
-    private
 
     def _serialize_attributes(attributes, resource, policy, options)
       attributes.each_with_object({}) do |attribute, hash|
