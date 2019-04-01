@@ -69,13 +69,13 @@ module HALPresenter
         Pagination.paginate!(serialized, resources) if options[:paginate]
 
         # Embedded from collection block
-        embedded = _serialize_embedded(embedded, resources, policy, options)
-        serialized[:_embedded] = embedded[:_embedded] || {}
+        serialized.merge! _serialize_embedded(embedded, resources, policy, options)
 
         # Embedded resources
         options[:_depth] += 1
         serialized_resources = resources.map { |resource| to_hash(resource, options) }
-        serialized[:_embedded].merge!({properties.name => serialized_resources })
+        serialized[:_embedded] ||= {}
+        serialized[:_embedded].merge!(properties.name => serialized_resources)
       end
     end
 
