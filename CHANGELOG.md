@@ -1,3 +1,8 @@
+## 1.1.0
+ * Add curie keyword argument to `::link`
+ * Add curie namespace
+ * Fixed bug with method_missing for inherited serializers
+ * Fixed bug with `::attribute` and `::embed` when called is only one argument.
 ## 1.0.0
  * Move embedded curies to root resource
  * Symbolize names given to `::attribute`, `::link` and `::embed`
