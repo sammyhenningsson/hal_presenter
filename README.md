@@ -125,6 +125,7 @@ Serializers are defined by extending `HALPresenter` in the begining of the class
 - [`::attribute(name, value = nil, embed_depth: nil, &block)`](#attribute)
 - [`::link(rel, value = nil, **options, &block)`](#link)
 - [`::curie(rel, value = nil, embed_depth: nil, &block)`](#curie)
+- [`::namespace(curie, &block)`](#namespace)
 - [`::embed(name, value = nil, embed_depth: nil, presenter_class: nil, &block)`](#embed)
 - [`::collection`](#collection)
 - [`::to_hal(resource = nil, options = {})`](#to_hal)
@@ -164,8 +165,8 @@ HALPresenter.to_hal(post, {presenter: PostSerializer})
 Even though the `model` class method is optional, it is very useful if the serializer should be selected dynamically and when the serializer is used for deserialization.
 
 ### ::policy
-The `policy` class method is used to register a policy class that should be used during serialization. The purpose of using a policy class is to exclude properties from being serialized depending on the context. E.g hide some attributes/link if current_user is not an admin.  
-Using polices is not required, but its a nice way to structure rules about what should be shown and what actions (links) are possible to perform on a resource. The latter is usually tightly coupled with authorization in controllers. This means we can create polices with a bunch of rules and use the same policy in both serialization and in controllers. This plays very nicely with gems like [Pundit](https://github.com/elabs/pundit).
+The `policy` class method is used to register a policy class that should be used during serialization. The purpose of using a policy class is to specify rules about which properties should be serialized (depending on the context). E.g hide some attributes and/or links if `current_user` is not an admin. If a policy is specified, then by default no properties will be serialized unless the policy explicitly allows them to be serialized.  
+Using polices is not required, but its a nice way to structure rules about what should be shown and what actions (links) are possible to perform on a resource. The latter is usually tightly coupled with authorization in controllers. This means we can create polices with a bunch of rules and use the same policy in both serialization and in controllers. This plays nicely with gems like [Pundit](https://github.com/elabs/pundit).
 Instances of the class registered with this method needs to respond to the following methods:
 - `initialize(current_user, resource, options = {})`
 - `attribute?(name)`
@@ -174,10 +175,15 @@ Instances of the class registered with this method needs to respond to the follo
 
 Additional methods will be needed for authorization in controller. Such as `create?`, `update?` etc when using Pundit.
 A policy instance will be instantiated with the resource being serialized and the option `:current_user` passed to `::to_hal`. For each attribute being serialized a call to `policy_instance.attribute?(name)` will be made. If that call returns `true` then the attribute will be serialized. Else it will not end up in the serialized payload. Same goes for links and embedded resources. Curies are ignored by policies and always serialized.
-Using the following Policy would discard everything except a title attribute, the self link and embedded resources named foo.
+Using the following Policy would discard everything except the _title_ attribute, the _self_ link and only embedded resources if `current_user` is an admin user.
 ``` ruby
 class SomePolicy
+  attr_reader :current_user, :resource, :options
+
   def initialize(current_user, resource, options = {})
+    @current_user = current_user
+    @resource = resource
+    @options = options
   end
 
   def attribute?(name)
@@ -188,8 +194,9 @@ class SomePolicy
     rel == :self
   end
 
-  def embed?(name)
-    name.to_s == 'foo'
+  def embed?(_name)
+    return false unless current_user
+    current_user.admin?
   end
 end
 
@@ -240,6 +247,7 @@ PostSerializer.to_hal   # => {"_links": {"self": {"href": "/posts/1"}}}
 ```
 The following options may be given to `::link`:
 - `embed_depth` - sets a max allowed nesting depth for the corresponding link to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).
+- `curie` - prepends a curie to the rel.
 - `title` - a string used for labelling the link (e.g. in a user interface).
 - `type` - the media type of the resource returned after following this link.
 - `deprecation` - a URL providing information about the deprecation of this link.
@@ -285,6 +293,35 @@ Then if you make `Foo` embed resources serialized with `Bar` then a collision wi
 as the target URI.
 To remedy this, give the curies different names.
 
+### ::namespace
+Multiple links and embedded resources may be grouped together inside a curie namespace. This is done by wrapping them inside a block passed to `::namespace`.
+``` ruby
+class DogSerializer
+  extend HALPresenter
+  attribute :name
+  link :self do
+    "/dogs/#{resource.name}"
+  end
+end
+
+class PetSerializer
+  extend HALPresenter
+  namespace :foo do
+    link :owner do
+      "/users/#{resource.owner_id}"
+    end
+    embed :animal, presenter_class: DogSerializer
+  end
+  curie :foo do
+    '/some_link/{rel}'
+  end
+end
+
+dog = OpenStruct.new(id: 3, name: 'Milo')
+pet = OpenStruct.new(owner_id: 5, animal: dog)
+
+PetSerializer.to_hal(pet)   # => {"_links":{"foo:owner":{"href":"/users/5"},"curies":[{"name":"foo","href":"/some_link/{rel}","templated":true}]},"_embedded":{"foo:animal":{"name":"Milo","_links":{"self":{"href":"/dogs/Milo"}}}}}
+```
 
 ### ::embed
 The `embed` class method specifies a nested resource to be embedded. The first argument, `name`, is required. When `::embed` is called with only one argument, the resource being serialized is expected to respond to the value of that argument and the returned value is what ends up in the payload. The keyword argument `presenter_class` specifies the serializer to be used for serializing the embedded resource.
