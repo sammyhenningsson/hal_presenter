@@ -38,7 +38,7 @@ class SerializerTest < ActiveSupport::TestCase
       options[:edit_uri] || '/items/5/edit'
     end
     link :'doc:user', '/some/uri/with/namespace'
-    curie :'doc', '/some/templated/uri/{rel}'
+    curie :doc, '/some/templated/uri/{rel}'
     embed :parent, presenter_class: ParentPresenter
     embed :children, presenter_class: ChildPresenter
   end

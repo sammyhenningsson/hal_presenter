@@ -9,6 +9,7 @@ require 'hal_presenter/serializer'
 require 'hal_presenter/deserializer'
 require 'hal_presenter/collection'
 require 'hal_presenter/serialize_hooks'
+require 'hal_presenter/namespace'
 
 module HALPresenter
   include HALPresenter::Attributes
@@ -21,4 +22,5 @@ module HALPresenter
   include HALPresenter::Serializer
   include HALPresenter::Deserializer
   include HALPresenter::Policy
+  include HALPresenter::Namespace
 end
