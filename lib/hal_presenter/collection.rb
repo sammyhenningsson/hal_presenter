@@ -1,7 +1,9 @@
 require 'hal_presenter/property'
+require 'hal_presenter/super_init'
 
 module HALPresenter
   module Collection
+    include SuperInit
 
     class Properties
       include Attributes
@@ -28,29 +30,25 @@ module HALPresenter
         return true if scope&.respond_to? method
         super
       end
+
+      def change_context(context)
+        @scope = context
+        self
+      end
     end
 
     def collection(of:, &block)
-      @_collection_properties = Properties.new(of, self, &block)
+      @__collection_properties = Properties.new(of, self, &block)
     end
 
     protected
 
     def collection_properties
-      @_collection_properties ||= __init_collection_params
+      @__collection_properties ||= __init_from_superclass(:collection_properties, default: nil)
     end
 
     def can_serialize_collection?
       !collection_properties.nil?
-    end
-
-    private
-
-    def __init_collection_params
-      return unless Class === self
-      if superclass.respond_to?(:collection_properties, true)
-        superclass.collection_properties
-      end
     end
   end
 end

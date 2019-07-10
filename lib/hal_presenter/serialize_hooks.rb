@@ -21,13 +21,13 @@ module HALPresenter
     end
 
     def post_serialize(&block)
-      @_post_serialize_hook = Hook.new(&block)
+      @__post_serialize_hook = Hook.new(&block)
     end
 
     protected
 
     def post_serialize_hook
-      @_post_serialize_hook ||= __init_post_serialize_hook
+      @__post_serialize_hook ||= __init_post_serialize_hook
     end
 
     private

@@ -2,13 +2,13 @@ module HALPresenter
   module Policy
 
     def policy(clazz)
-      @_policy = clazz
+      @__policy = clazz
     end
 
     protected
 
     def policy_class
-      @_policy ||= __init_policy
+      @__policy ||= __init_policy
     end
 
     private

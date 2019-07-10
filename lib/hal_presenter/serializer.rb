@@ -6,7 +6,7 @@ module HALPresenter
   def self.to_hal(resource, options = {})
     raise Serializer::Error, "Resource is nil" if resource.nil?
     presenter = options.delete(:presenter)
-    presenter ||= HALPresenter.lookup_presenter(resource)&.last
+    presenter ||= HALPresenter.lookup_presenter(resource)
     raise Serializer::Error, "No presenter for #{resource.class}" unless presenter
     presenter.to_hal(resource, options)
   end
@@ -14,7 +14,7 @@ module HALPresenter
   def self.to_collection(resources, options = {})
     raise Serializer::Error, "resources is nil" if resources.nil?
     presenter = options.delete(:presenter)
-    presenter ||= HALPresenter.lookup_presenter(resources.first)&.last
+    presenter ||= HALPresenter.lookup_presenter(resources.first)
     raise Serializer::Error, "No presenter for #{resources.first.class}" unless presenter
     presenter.to_collection(resources, options)
   end
@@ -168,7 +168,7 @@ module HALPresenter
           if resource.is_a? Array
             _serialize_embedded_collection(resource, presenter, options)
           else
-            presenter ||= HALPresenter.lookup_presenter(resource).first
+            presenter ||= HALPresenter.lookup_presenter(resource)
             presenter.to_hash(resource, options)
           end
       end
@@ -178,7 +178,7 @@ module HALPresenter
 
     def _serialize_embedded_collection(resources, presenter, options)
       clazz = resources.first.class
-      presenter ||= HALPresenter.lookup_presenter(clazz)&.first
+      presenter ||= HALPresenter.lookup_presenter(clazz)
       if presenter.nil?
         raise Serializer::Error,
           "No presenter specified to handle serializing embedded #{clazz}"

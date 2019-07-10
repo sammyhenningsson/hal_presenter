@@ -310,10 +310,10 @@ class SerializerTest < ActiveSupport::TestCase
   test 'subclasses of a registered model will use the same presenter' do
     grand_child_class = Class.new(Child)
     grand_child = grand_child_class.new('title', 'some data')
-    HALPresenter.to_hal(grand_child).itself do |payload|
+    HALPresenter.to_hal(grand_child).tap do |payload|
       assert_sameish_hash(
         {
-          data: 'some_data'
+          data: 'some data'
         },
         JSON.parse(payload)
       )
@@ -337,7 +337,7 @@ class SerializerTest < ActiveSupport::TestCase
     child = Child.new(:child1, :child1_data)
     foo = foo.new(:foo1, :foo1_data)
 
-    HALPresenter.to_hal(child).itself do |payload|
+    HALPresenter.to_hal(child).tap do |payload|
       assert_sameish_hash(
         {
           data: 'child1_data',
@@ -347,7 +347,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    HALPresenter.to_hal(foo).itself do |payload|
+    HALPresenter.to_hal(foo).tap do |payload|
       assert_sameish_hash(
         {
           data: 'foo1_data',
@@ -357,6 +357,9 @@ class SerializerTest < ActiveSupport::TestCase
         JSON.parse(payload)
       )
     end
+
+    # CLeanup
+    HALPresenter.unregister(presenter_a)
   end
 
   test 'inheritance of attributes' do
@@ -379,15 +382,15 @@ class SerializerTest < ActiveSupport::TestCase
       attribute(:y) { "#{a}#{b}" }
     end
 
-    presenter_a.to_hal(nil).itself do |payload|
+    presenter_a.to_hal(nil).tap do |payload|
       assert_sameish_hash({a: 'A'}, JSON.parse(payload))
     end
 
-    presenter_b.to_hal(nil).itself do |payload|
+    presenter_b.to_hal(nil).tap do |payload|
       assert_sameish_hash({a: 'A', b: 'B', x: 'A'}, JSON.parse(payload))
     end
 
-    presenter_c.to_hal(nil, {c: true}).itself do |payload|
+    presenter_c.to_hal(nil, {c: true}).tap do |payload|
       assert_sameish_hash({a: 'AC', b: 'bc', c: 'C', x: 'A', y: 'AB'}, JSON.parse(payload))
     end
   end
@@ -406,13 +409,14 @@ class SerializerTest < ActiveSupport::TestCase
     end
 
     presenter_c = Class.new(presenter_b) do
+      def self.a; "C"; end
       def self.c; "C"; end
       link(:b, 'bc')
       link(:c) { c }
       link(:y) { "#{a}#{b}" }
     end
 
-    presenter_a.to_hal(nil).itself do |payload|
+    presenter_a.to_hal(nil).tap do |payload|
       assert_sameish_hash(
         {
           _links: {
@@ -425,7 +429,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    presenter_b.to_hal(nil).itself do |payload|
+    presenter_b.to_hal(nil).tap do |payload|
       assert_sameish_hash(
         {
           _links: {
@@ -444,12 +448,12 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    presenter_c.to_hal(nil, {c: true}).itself do |payload|
+    presenter_c.to_hal(nil, {c: true}).tap do |payload|
       assert_sameish_hash(
         {
           _links: {
             a: {
-              href: 'AC'
+              href: 'CC'
             },
             b: {
               href: 'bc'
@@ -458,10 +462,10 @@ class SerializerTest < ActiveSupport::TestCase
               href: 'C'
             },
             x: {
-              href: 'A'
+              href: 'C'
             },
             y: {
-              href: 'AB'
+              href: 'CB'
             }
           }
         },
@@ -490,7 +494,7 @@ class SerializerTest < ActiveSupport::TestCase
       curie(:y) { "#{a}#{b}" }
     end
 
-    presenter_a.to_hal(nil).itself do |payload|
+    presenter_a.to_hal(nil).tap do |payload|
       assert_sameish_hash(
         {
           _links: {
@@ -507,7 +511,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    presenter_b.to_hal(nil).itself do |payload|
+    presenter_b.to_hal(nil).tap do |payload|
       assert_sameish_hash(
         {
           _links: {
@@ -534,7 +538,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    presenter_c.to_hal(nil, {c: true}).itself do |payload|
+    presenter_c.to_hal(nil, {c: true}).tap do |payload|
       assert_sameish_hash(
         {
           _links: {
@@ -592,7 +596,7 @@ class SerializerTest < ActiveSupport::TestCase
       b: Child.new(:child_b, :child_b_data)
     )
 
-    presenter_a.to_hal(obj).itself do |payload|
+    presenter_a.to_hal(obj).tap do |payload|
       assert_sameish_hash(
         {
           _embedded: {
@@ -605,7 +609,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    presenter_b.to_hal(obj).itself do |payload|
+    presenter_b.to_hal(obj).tap do |payload|
       assert_sameish_hash(
         {
           _embedded: {
@@ -621,7 +625,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    presenter_c.to_hal(obj).itself do |payload|
+    presenter_c.to_hal(obj).tap do |payload|
       assert_sameish_hash(
         {
           _embedded: {

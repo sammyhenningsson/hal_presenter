@@ -1,7 +1,10 @@
 require 'hal_presenter/property'
+require 'hal_presenter/super_init'
 
 module HALPresenter
   module Embedded
+    include SuperInit
+
     class Embed < HALPresenter::Property
       attr_reader :presenter_class
 
@@ -12,25 +15,14 @@ module HALPresenter
     end
 
     def embed(*args, **kw_args, &block)
-      @_embedded ||= __init_embedded
-      @_embedded = @_embedded.reject { |embed| embed.name == args.first }
-      @_embedded << Embed.new(*args, **kw_args, &block)
+      embedded.delete_if { |embed| embed.name == args.first }
+      embedded << Embed.new(*args, **kw_args, &block)
     end
 
     protected
 
     def embedded
-      @_embedded ||= __init_embedded
-    end
-
-    private
-
-    def __init_embedded
-      return [] unless Class === self
-      return [] unless superclass.respond_to?(:embedded, true)
-      superclass.embedded.each do |embed|
-        embed.change_context(self)
-      end
+      @__embedded ||= __init_from_superclass(:embedded)
     end
   end
 end

@@ -14,7 +14,7 @@ class DSLTest < ActiveSupport::TestCase
     Model = Struct.new(:title)
     @serializer.model Model
     resource = Model.new(title: 'some title')
-    assert_equal @serializer, HALPresenter.lookup_presenter(resource).first
+    assert_equal @serializer, HALPresenter.lookup_presenter(resource)
   end
 
   test 'policy' do

@@ -1,4 +1,5 @@
 require 'hal_presenter/property'
+require 'hal_presenter/super_init'
 
 module HALPresenter
 
@@ -13,6 +14,7 @@ module HALPresenter
   end
 
   module Links
+    include SuperInit
 
     class Link < HALPresenter::Property
       attr_reader :type, :deprecation, :profile, :title
@@ -55,25 +57,14 @@ module HALPresenter
     end
 
     def link(rel, value = nil, **kwargs, &block)
-      @_links ||= __init_links
-      @_links = @_links.reject { |link| link.rel == rel }
-      @_links << Link.new(rel, value, **kwargs, &block)
+      links.delete_if { |link| link.rel == rel }
+      links << Link.new(rel, value, **kwargs, &block)
     end
 
     protected
 
     def links
-      @_links ||= __init_links
-    end
-
-    private
-
-    def __init_links
-      return [] unless Class === self
-      return [] unless superclass.respond_to?(:links, true)
-      superclass.links.each do |link|
-        link.change_context(self)
-      end
+      @__links ||= __init_from_superclass(:links)
     end
   end
 end
