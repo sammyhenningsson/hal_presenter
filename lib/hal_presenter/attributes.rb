@@ -19,6 +19,7 @@ module HALPresenter
     def __init_attributes
       return [] unless Class === self
       return [] unless superclass.respond_to?(:attributes, true)
+
       superclass.attributes.each do |attr|
         attr.change_context(self)
       end

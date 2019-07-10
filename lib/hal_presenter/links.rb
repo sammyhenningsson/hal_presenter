@@ -22,10 +22,15 @@ module HALPresenter
         if value.nil? && !block_given?
           raise 'link must be called with non nil value or be given a block'
         end
-        @type =         kwargs[:type]
-        @deprecation =  kwargs[:deprecation]
-        @profile =      kwargs[:profile]
-        @title =        kwargs[:title]
+
+        @type =         kwargs[:type].freeze
+        @deprecation =  kwargs[:deprecation].freeze
+        @profile =      kwargs[:profile].freeze
+        @title =        kwargs[:title].freeze
+
+        curie = kwargs[:curie]&.to_s
+        rel = [curie, rel.to_s].join(':') if curie && !curie.empty?
+
         super(rel, value, embed_depth: kwargs[:embed_depth], &block)
       end
 
