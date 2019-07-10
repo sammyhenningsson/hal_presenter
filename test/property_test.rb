@@ -19,18 +19,18 @@ class PropertyTest < ActiveSupport::TestCase
   end
 
   test 'that value is returned from block' do
-    property = HALPresenter::Property.new(:name) { 'bus' }
+    property = HALPresenter::Property.new(:name, context: self) { 'bus' }
     assert_equal('bus', property.value(@item))
   end
 
   test 'that resource is accessible in block' do
-    property = HALPresenter::Property.new(:name) { resource.color }
+    property = HALPresenter::Property.new(:name, context: self) { resource.color }
     assert_equal('green', property.value(@item))
   end
 
   test 'that options is accessible in block' do
     opts = { default_value: 'blue' }
-    property = HALPresenter::Property.new(:name) { options[:default_value] }
+    property = HALPresenter::Property.new(:name, context: self) { options[:default_value] }
     assert_equal('blue', property.value(@item, opts))
   end
 
@@ -39,7 +39,7 @@ class PropertyTest < ActiveSupport::TestCase
     opts2 = { default_value: 'black' }
     item2 = Struct::Item.new('bus', 'white')
 
-    property = HALPresenter::Property.new(:name) do
+    property = HALPresenter::Property.new(:name, context: self) do
       [resource.name, options[:default_value]]
     end
 
@@ -52,7 +52,7 @@ class PropertyTest < ActiveSupport::TestCase
       x = yield if block_given?
       "#{arg}_#{x}"
     end
-    property = HALPresenter::Property.new(:name) do
+    property = HALPresenter::Property.new(:name, context: self) do
       presenter_foo('something') { 'complex' }
     end
     assert_equal('something_complex', property.value)

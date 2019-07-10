@@ -18,12 +18,16 @@ module HALPresenter
       end
     end
 
-    def curie(rel, value = nil, embed_depth: nil, &block)
+    def curie(rel, value = nil, **kwargs, &block)
       if value.nil? && !block_given?
         raise 'curie must be called with non nil value or be given a block'
       end
+
+      kwargs[:context] ||= self
       curies.delete_if { |curie| curie.name == rel }
-      curies << Curie.new(rel, value, embed_depth: embed_depth, &block)
+      Curie.new(rel, value, **kwargs, &block).tap do |curie|
+        curies << curie
+      end
     end
 
     protected

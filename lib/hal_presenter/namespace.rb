@@ -15,18 +15,22 @@ module HALPresenter
       private
 
       def link(rel, value = nil, **kwargs, &block)
-        rel = add_curie!(rel, kwargs)
-        presenter.link(rel, value, **kwargs, &block)
+        add_property(:link, rel, value, **kwargs, &block)
       end
 
       def embed(rel, value = nil, **kwargs, &block)
+        add_property(:embed, rel, value, **kwargs, &block)
+      end
+
+      def add_property(method, rel, value, **kwargs, &block)
         rel = add_curie!(rel, kwargs)
-        presenter.embed(rel, value, **kwargs, &block)
+        kwargs[:context] = presenter
+        presenter.public_send(method, rel, value, **kwargs, &block)
       end
 
       def add_curie!(rel, kwargs)
         ns = kwargs.delete(:curie) { curie }
-        [ns.to_s, rel.to_s].join(':')
+        "#{ns}:#{rel}"
       end
     end
 

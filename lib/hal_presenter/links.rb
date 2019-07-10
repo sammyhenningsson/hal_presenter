@@ -20,24 +20,18 @@ module HALPresenter
       attr_reader :type, :deprecation, :profile, :title
       attr_accessor :templated
 
-      def initialize(rel, value = nil, **kwargs, &block)
-        if value.nil? && !block_given?
-          raise 'link must be called with non nil value or be given a block'
-        end
+      alias rel name
 
+      def initialize(rel, value = nil, **kwargs, &block)
         @type =         kwargs[:type].freeze
         @deprecation =  kwargs[:deprecation].freeze
         @profile =      kwargs[:profile].freeze
         @title =        kwargs[:title].freeze
 
-        curie = kwargs[:curie]&.to_s
-        rel = [curie, rel.to_s].join(':') if curie && !curie.empty?
+        curie = kwargs[:curie].to_s
+        rel = [curie, rel.to_s].join(':') unless curie.empty?
 
-        super(rel, value, embed_depth: kwargs[:embed_depth], &block)
-      end
-
-      def rel
-        name
+        super(rel, value, kwargs.slice(:embed_depth, :context), &block)
       end
 
       def to_h(resource = nil, options = {})
@@ -57,8 +51,15 @@ module HALPresenter
     end
 
     def link(rel, value = nil, **kwargs, &block)
+      if value.nil? && !block_given?
+        raise 'link must be called with non nil value or be given a block'
+      end
+
+      kwargs[:context] ||= self
       links.delete_if { |link| link.rel == rel }
-      links << Link.new(rel, value, **kwargs, &block)
+      Link.new(rel, value, **kwargs, &block).tap do |link|
+        links << link
+      end
     end
 
     protected

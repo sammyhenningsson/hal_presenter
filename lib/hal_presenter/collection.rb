@@ -20,6 +20,33 @@ module HALPresenter
         instance_exec(&block)
       end
 
+      def attribute(*args, **kwargs, &block)
+        kwargs[:context] = scope
+        super
+      end
+
+      def link(rel, value = nil, **kwargs, &block)
+        kwargs[:context] = scope
+        super
+      end
+
+      def curie(rel, value = nil, **kwargs, &block)
+        kwargs[:context] = scope
+        super
+      end
+
+      def embed(*args, **kwargs, &block)
+        kwargs[:context] = scope
+        super
+      end
+
+      def change_context(context)
+        @scope = context
+        self
+      end
+
+      private
+
       def method_missing(method, *args, &block)
         return super unless scope&.respond_to? method
         define_singleton_method(method) { |*a, &b| scope.public_send method, *a, &b }
@@ -29,11 +56,6 @@ module HALPresenter
       def respond_to_missing?(method, include_private = false)
         return true if scope&.respond_to? method
         super
-      end
-
-      def change_context(context)
-        @scope = context
-        self
       end
     end
 

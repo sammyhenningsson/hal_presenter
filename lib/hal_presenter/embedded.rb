@@ -8,15 +8,18 @@ module HALPresenter
     class Embed < HALPresenter::Property
       attr_reader :presenter_class
 
-      def initialize(name, value = nil, **kw_args, &block)
-        @presenter_class = kw_args.delete(:presenter_class)
-        super(name, value, **kw_args, &block)
+      def initialize(name, value = nil, **kwargs, &block)
+        @presenter_class = kwargs.delete(:presenter_class)
+        super(name, value, **kwargs, &block)
       end
     end
 
-    def embed(*args, **kw_args, &block)
+    def embed(*args, **kwargs, &block)
+      kwargs[:context] ||= self
       embedded.delete_if { |embed| embed.name == args.first }
-      embedded << Embed.new(*args, **kw_args, &block)
+      Embed.new(*args, **kwargs, &block).tap do |embed|
+        embedded << embed
+      end
     end
 
     protected
