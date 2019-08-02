@@ -22,16 +22,6 @@ And then execute:
 $ bundle
 ```
 
-### Name changed from HALDecorator to HALPresenter
-Since serializers created using this gem actually follow the presenter pattern rather than the decorator pattern, it felt appropriate to rename the gem.
-Version 0.5.0 drops backward compatibility with the old `HALDecorator` module and all occurrences of must now be replaced with `HALPresenter`.
-Also change all occurrences of `require 'hal_decorator'` to `require 'hal_presenter'`.  
-The following commands may be of great help:
-```sh
-grep -rl Decorator . | xargs sed -i "s/Decorator/Presenter/g"
-grep -rl decorator . | xargs sed -i "s/decorator/presenter/g"
-```
-
 ## Intro
 Lets start with an example. Say you have your typical blog and you want to serialize post resources. Posts have some text, an author and possibly some comments. Only the author of the post may edit or delete it. A serializer could then be written as:
 ``` ruby
@@ -64,7 +54,7 @@ class PostSerializer
 end
 
 ```
-Then `Post` instances can be serialized with `HALPresenter.to_hal(post)` which will produce the following (assuming the current user is the author of the post, else the edit/delete links would not be present):
+Then `Post` instances can be serialized with `HALPresenter.to_hal(post, current_user: some_user)` which will produce the following (assuming the current user is the author of the post, else the edit/delete links would not be present):
 
 ``` ruby
 {   
@@ -245,14 +235,6 @@ class PostSerializer
 end
 PostSerializer.to_hal   # => {"_links": {"self": {"href": "/posts/1"}}}
 ```
-The following options may be given to `::link`:
-- `embed_depth` - sets a max allowed nesting depth for the corresponding link to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).
-- `curie` - prepends a curie to the rel.
-- `title` - a string used for labelling the link (e.g. in a user interface).
-- `type` - the media type of the resource returned after following this link.
-- `deprecation` - a URL providing information about the deprecation of this link.
-- `profile` - a URI that hints about the profile of the target resource.  
-
 When a block is passed to `::link`, the return value of that block is what ends up as the href of the link.
 ``` ruby
 class PostSerializer
@@ -264,6 +246,13 @@ end
 post = OpenStruct.new(id: 5)
 PostSerializer.to_hal(post)   # => {"_links": {"self": {"href": "/posts/5"}}}
 ```
+The following options may be given to `::link`:
+- `embed_depth` - sets a max allowed nesting depth for the corresponding link to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).
+- `curie` - prepends a curie to the rel.
+- `title` - a string used for labelling the link (e.g. in a user interface).
+- `type` - the media type of the resource returned after following this link.
+- `deprecation` - a URL providing information about the deprecation of this link.
+- `profile` - a URI that hints about the profile of the target resource.  
 
 ### ::curie
 The `curie` class method specifies a curie to be added to the _curies_ list. The first argument, `rel`, is required. `::curie` must be called with either a second argument (`value`) or a block.
@@ -330,10 +319,12 @@ class UserSerializer
   extend HALPresenter
   attribute :name
 end
+
 class PostSerializer
   extend HALPresenter
   embed :author, presenter_class: UserSerializer
 end
+
 user = OpenStruct.new(name: "bengt")
 post = OpenStruct.new(title: "hello", author: user)
 PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
@@ -344,10 +335,12 @@ class UserSerializer
   extend HALPresenter
   attribute :name
 end
+
 class PostSerializer
   extend HALPresenter
   embed :author, OpenStruct.new(name: "bengt"), presenter_class: UserSerializer
 end
+
 post = OpenStruct.new(title: "hello")
 PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 ```
@@ -358,12 +351,14 @@ class UserSerializer
   extend HALPresenter
   attribute :name
 end
+
 class PostSerializer
   extend HALPresenter
   embed :author, presenter_class: UserSerializer do
     OpenStruct.new(name: "bengt")
   end
 end
+
 post = OpenStruct.new(title: "hello")
 PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 ```
@@ -372,15 +367,18 @@ PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 class User
   def name; "bengt"; end
 end
+
 class UserSerializer
   extend HALPresenter
   model User
   attribute :name
 end
+
 class PostSerializer
   extend HALPresenter
   embed :author
 end
+
 post = OpenStruct.new(title: "hello", author: User.new)
 PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 ```
@@ -393,9 +391,11 @@ class PostSerializer
   attribute :title
   collection of: 'posts'
 end
+
 list = (1..2).map do |i|
   OpenStruct.new(id: i, title: "hello#{i}")
 end
+
 PostSerializer.to_collection(list)   # => {"_embedded":{"posts":[{"id":1,"title":"hello1"},{"id":2,"title":"hello2"}]}}
 ```
 The `collection` class method takes an optional block. The purpose of this block is to be able to set attributes, links and embedded resources on the serialized collection.
@@ -414,9 +414,11 @@ class PostSerializer
     end
   end
 end
+
 list = (1..2).map do |i|
   OpenStruct.new(id: i, title: "hello#{i}")
 end
+
 PostSerializer.to_collection(list, {page: 1, next: 2})   # => {"number_of_posts":2,"_links":{"self":{"href":"/posts?page=1"},"next":{"href":"/posts?page=2"}},"_embedded":{"posts":[{"id":1,"title":"hello1"},{"id":2,"title":"hello2"}]}}"
 ```
 The response above with some newlines.
