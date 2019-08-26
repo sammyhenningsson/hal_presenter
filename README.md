@@ -13,7 +13,7 @@ gem install hal_presenter
 With Gemfile:
 
 ```sh
-gem 'hal_presenter', '~>1.1.0'
+gem 'hal_presenter', '~>1.2.0'
 ```
 
 And then execute:
@@ -54,7 +54,7 @@ class PostSerializer
 end
 
 ```
-Then `Post` instances can be serialized with `HALPresenter.to_hal(post, current_user: some_user)` which will produce the following (assuming the current user is the author of the post, else the edit/delete links would not be present):
+Instances of `Post` can now be serialized with `HALPresenter.to_hal(post, current_user: some_user)` which will produce the following (assuming the current user is the author of the post. Else the edit/delete links would not be present):
 
 ``` ruby
 {   
@@ -111,6 +111,7 @@ Then `Post` instances can be serialized with `HALPresenter.to_hal(post, current_
 ## Defining a Serializer
 Serializers are defined by extending `HALPresenter` in the begining of the class declaration. This will add the following class methods:
 - [`::model(clazz)`](#model)
+- [`::profile(value = nil, **kwargs, &block)`](#profile)
 - [`::policy(clazz)`](#policy)
 - [`::attribute(name, value = nil, embed_depth: nil, &block)`](#attribute)
 - [`::link(rel, value = nil, **options, &block)`](#link)
@@ -153,6 +154,30 @@ The serializer class may also be specified as an option, using the `:presenter` 
 HALPresenter.to_hal(post, {presenter: PostSerializer})
 ```
 Even though the `model` class method is optional, it is very useful if the serializer should be selected dynamically and when the serializer is used for deserialization.
+
+### ::profile
+The `profile` class method is used to specify a mediatype profile that the serializer is conforming to. This is optional and does not change anything about how things get serialized.
+This method exist only to specify that a given serializer will produce content with semantic meaning described in the specified mediatype profile.  
+The profile is retrieved with the class method `semantic_profile`.
+``` ruby
+class PostSerializer
+  extend HALPresenter
+  profile "foobar"
+end
+
+PostSerializer.semantic_profile     # => "foobar"
+
+# Or with a block
+
+class PostSerializer
+  extend HALPresenter
+  profile do
+    "foo#{options[:foo]}"
+  end
+end
+
+PostSerializer.semantic_profile(foo: 'bar')     # => "foobar"
+```
 
 ### ::policy
 The `policy` class method is used to register a policy class that should be used during serialization. The purpose of using a policy class is to specify rules about which properties should be serialized (depending on the context). E.g hide some attributes and/or links if `current_user` is not an admin. If a policy is specified, then by default no properties will be serialized unless the policy explicitly allows them to be serialized.  
@@ -200,6 +225,7 @@ class PostSerializer
   extend HALPresenter
   attribute :title
 end
+
 post = OpenStruct.new(title: "hello")
 PostSerializer.to_hal(post)   # => {"title": "hello"}
 ```
@@ -209,6 +235,7 @@ class PostSerializer
   extend HALPresenter
   attribute :title, "world"
 end
+
 post = OpenStruct.new(title: "ignored")
 PostSerializer.to_hal(post)   # => {"title": "world"}
 ```
@@ -221,6 +248,7 @@ class PostSerializer
     resource.title.upcase
   end
 end
+
 post = OpenStruct.new(title: "hello")
 PostSerializer.to_hal(post)   # => {"title": "HELLO"}
 ```
@@ -233,16 +261,19 @@ class PostSerializer
   extend HALPresenter
   link :self, '/posts/1'
 end
+
 PostSerializer.to_hal   # => {"_links": {"self": {"href": "/posts/1"}}}
 ```
 When a block is passed to `::link`, the return value of that block is what ends up as the href of the link.
 ``` ruby
 class PostSerializer
   extend HALPresenter
+
   link :self do
     "/posts/#{resource.id}"
   end
 end
+
 post = OpenStruct.new(id: 5)
 PostSerializer.to_hal(post)   # => {"_links": {"self": {"href": "/posts/5"}}}
 ```
@@ -259,9 +290,11 @@ The `curie` class method specifies a curie to be added to the _curies_ list. The
 ``` ruby
 class PostSerializer
   extend HALPresenter
+
   curie :doc, '/api/docs/{rel}'
   link :'doc:user', '/users/5'
 end
+
 PostSerializer.to_hal   # => {"_links":{"doc:user":{"href":"/users/5"},"curies":[{"name":"doc","href":"/api/docs/{rel}","templated":true}]}}
 ```
 The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding curie to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).  
@@ -269,9 +302,11 @@ When a block is passed to `::curie`, the return value of that block is what ends
 ``` ruby
 class PostSerializer
   extend HALPresenter
+
   curie :doc { '/api/docs/{rel}' }
   link :'doc:user', '/users/5'
 end
+
 post = OpenStruct.new(id: 5)
 PostSerializer.to_hal(post)   # => {"_links":{"doc:user":{"href":"/users/5"},"curies":[{"name":"doc","href":"/api/docs/{rel}","templated":true}]}}
 ```
@@ -515,6 +550,7 @@ class PostSerializer
     "#{resource.id} -- #{resource.title} -- #{options[:extra]}"
   end
 end
+
 post = OpenStruct.new(id: 5, title: "hello")
 PostSerializer.to_hal(post, {extra: 'world'})   # => {"title": "5 -- hello -- world"}
 ```
@@ -527,6 +563,7 @@ class PostSerializer
     "#{bonus_text} -- #{resource.title}"
   end
 end
+
 post = OpenStruct.new(id: 5, title: "hello")
 PostSerializer.to_hal(post)   # => {"title":"Common stuff -- hello"}
 ```
@@ -543,6 +580,7 @@ class PostSerializer
     "/posts/#{resource.id}" if resource.author_id == options[:current_user].id
   end
 end
+
 user = OpenStruct.new(id: 5)
 post = OpenStruct.new(id: 1, title: "hello", author_id: 2)
 PostSerializer.to_hal(post, {current_user: user})   # => {"title":"hello","foo":null,"_links":{"self":{"href":"/posts/1"}}}
@@ -592,6 +630,7 @@ The `::post_serialize` class method can used to run a hook after each serializat
     extend HALPresenter
 
     model Form
+    profile 'shaf-form'
 
     attribute :method do
       (resource&.method || 'POST').to_s.upcase
@@ -616,6 +655,9 @@ The `::post_serialize` class method can used to run a hook after each serializat
     link :self do
       resource&.self_link
     end
+
+    link :profile,
+      "https://gist.githubusercontent.com/sammyhenningsson/39c8aafeaf60192b082762cbf3e08d57/raw/shaf-form.md"
 
     post_serialize do |hash|
       fields = resource&.fields
