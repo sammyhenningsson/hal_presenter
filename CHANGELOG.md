@@ -1,3 +1,6 @@
+## 1.2.0
+ * Specify mediatype profile
+ * Lookup presenter from single resource or collection
 ## 1.1.0
  * Add curie keyword argument to `::link`
  * Add curie namespace
