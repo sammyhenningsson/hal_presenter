@@ -14,7 +14,7 @@ module HALPresenter
   def self.to_collection(resources, options = {})
     raise Serializer::Error, "resources is nil" if resources.nil?
     presenter = options.delete(:presenter)
-    presenter ||= HALPresenter.lookup_presenter(resources.first)
+    presenter ||= HALPresenter.lookup_presenter(resources)
     raise Serializer::Error, "No presenter for #{resources.first.class}" unless presenter
     presenter.to_collection(resources, options)
   end

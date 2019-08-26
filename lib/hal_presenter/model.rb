@@ -1,24 +1,26 @@
 module HALPresenter
   @presenters = {}
 
-  def HALPresenter.register(model:, presenter:)
+  def self.register(model:, presenter:)
     return unless presenter && model
     @presenters[presenter] = model
   end
 
-  def HALPresenter.unregister(presenter)
+  def self.unregister(presenter)
     @presenters.delete_if { |d,_| d == presenter }
   end
 
-  def HALPresenter.lookup_model(presenter)
+  def self.lookup_model(presenter)
     @presenters[presenter]
   end
 
-  def HALPresenter.lookup_presenter(model)
-    lookup_presenters(model).last
+  def self.lookup_presenter(model)
+    presenters = lookup_presenters(model)
+    return presenters.last unless presenters.empty?
+    lookup_presenters(model.first).last if model.respond_to? :first
   end
 
-  def HALPresenter.lookup_presenters(model)
+  def self.lookup_presenters(model)
     clazz = model.is_a?(Class) ? model : model.class
     presenters = @presenters.select { |_d, m| m == clazz }.keys
     return presenters unless presenters.empty?
