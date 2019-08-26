@@ -1,5 +1,6 @@
 require 'hal_presenter/model'
 require 'hal_presenter/policy'
+require 'hal_presenter/profile'
 require 'hal_presenter/policy/dsl'
 require 'hal_presenter/attributes'
 require 'hal_presenter/links'
@@ -22,5 +23,6 @@ module HALPresenter
   include HALPresenter::Serializer
   include HALPresenter::Deserializer
   include HALPresenter::Policy
+  include HALPresenter::Profile
   include HALPresenter::Namespace
 end

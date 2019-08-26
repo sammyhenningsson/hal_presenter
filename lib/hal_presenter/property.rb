@@ -12,7 +12,7 @@ module HALPresenter
       @lazy = block_given? ? LazyEvaluator.new(block, @context) : nil
     end
 
-    def value(resource = nil, options = nil)
+    def value(resource = nil, options = {})
       if @lazy
         @lazy.evaluate(resource, options)
       elsif @value

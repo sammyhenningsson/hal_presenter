@@ -23,12 +23,33 @@ class DSLTest < ActiveSupport::TestCase
     assert_equal p, @serializer.send(:policy_class)
   end
 
+  test 'profile defaults to nil' do
+    assert_nil @serializer.semantic_profile
+  end
+
+  test 'profile with value from contant' do
+    @serializer.profile 'foobar'
+    assert_equal 'foobar', @serializer.semantic_profile
+    assert_equal 'foobar', @serializer.semantic_profile(@obj)
+  end
+
+  test 'profile with value from block' do
+    @serializer.profile { resource.from_block }
+    assert_equal 'string_from_block', @serializer.semantic_profile(@obj)
+  end
+
+  test 'profile can be inherited' do
+    @serializer.profile 'foobar'
+    child = Class.new(@serializer)
+    assert_equal 'foobar', child.semantic_profile(@obj)
+  end
+
   test 'attribute with value from contant' do
     @serializer.attribute :from_constant, 'some_string'.freeze
     attribute = @serializer.send(:attributes).first
     assert_instance_of HALPresenter::Property, attribute
     assert_equal :from_constant, attribute.name
-    assert_equal 'some_string' , attribute.value('ignore'.freeze)
+    assert_equal 'some_string', attribute.value('ignore'.freeze)
   end
 
   test 'attribute with value from object' do
