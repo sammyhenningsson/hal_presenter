@@ -239,7 +239,6 @@ end
 post = OpenStruct.new(title: "ignored")
 PostSerializer.to_hal(post)   # => {"title": "world"}
 ```
-The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding attribute to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).  
 When a block is passed to `::attribute`, then the return value of that block is what ends up in the payload.
 ``` ruby
 class PostSerializer
@@ -252,7 +251,8 @@ end
 post = OpenStruct.new(title: "hello")
 PostSerializer.to_hal(post)   # => {"title": "HELLO"}
 ```
-Notice that the object being serialized (`post` in the above example) is accessible inside the block by the `resource` method.
+Notice that the object being serialized (`post` in the above example) is accessible inside the block by the `resource` method.  
+The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding attribute to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).  
 
 ### ::link
 The `link` class method specifies a link to be added to the _\_links_ property. The first argument, `rel`, is required. `::link` must be called with either a second argument (`value`) or a block.
@@ -558,14 +558,14 @@ These blocks also have access to the scope where the block was created (e.g. the
 ``` ruby
 class PostSerializer
   extend HALPresenter
-  def self.bonus_text; "Common stuff"; end
+  def self.prefix; "-->"; end
   attribute :title do
-    "#{bonus_text} -- #{resource.title}"
+    "#{prefix} #{resource.title}"
   end
 end
 
 post = OpenStruct.new(id: 5, title: "hello")
-PostSerializer.to_hal(post)   # => {"title":"Common stuff -- hello"}
+PostSerializer.to_hal(post)   # => {"title": "--> hello"}
 ```
 Note: this does not mean that `self` inside the block is the serializer class. The access to the serializer class methods is done by delegation.  
 If the block passed to `::attribute` evaluates to `nil` then the serialized value will be `null`. If the block passed to `::link`, `::curie` or `::embed` evaluates to `nil`,
