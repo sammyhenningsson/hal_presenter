@@ -31,7 +31,13 @@ module HALPresenter
         curie = kwargs[:curie].to_s
         rel = [curie, rel.to_s].join(':') unless curie.empty?
 
-        super(rel, value, kwargs.slice(:embed_depth, :context), &block)
+        super(
+          rel,
+          value,
+          embed_depth: kwargs[:embed_depth],
+          context: kwargs[:context],
+          &block
+        )
       end
 
       def to_h(resource = nil, options = {})
