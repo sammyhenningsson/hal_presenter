@@ -108,6 +108,14 @@ module HALPresenter
 
       private
 
+      def delegate_to(policy_class, method, resource, arg = nil, options = {})
+        method = :"#{method}?" unless method.to_s.end_with? '?'
+        policy = policy_class.new(current_user, resource, options)
+        args = [method]
+        args << arg unless arg.nil?
+        policy.send(*args)
+      end
+
       attr_reader :current_user, :resource, :options
 
       def run(block)
