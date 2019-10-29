@@ -297,7 +297,6 @@ end
 
 PostSerializer.to_hal   # => {"_links":{"doc:user":{"href":"/users/5"},"curies":[{"name":"doc","href":"/api/docs/{rel}","templated":true}]}}
 ```
-The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding curie to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).  
 When a block is passed to `::curie`, the return value of that block is what ends up as the href of the curie.
 ``` ruby
 class PostSerializer
@@ -312,6 +311,7 @@ end
 post = OpenStruct.new(id: 5)
 PostSerializer.to_hal(post)   # => {"_links":{"doc:user":{"href":"/users/5"},"curies":[{"name":"doc","href":"/api/docs/{rel}","templated":true}]}}
 ```
+The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding curie to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).  
 When a resource is embedded in another resource all curies are added to the root resource. This ensures that each curie only appear once in the output.
 Note that curies may get renamed if there are conflicts between them. See example in [`::embed`](#embed) for more details.
 
