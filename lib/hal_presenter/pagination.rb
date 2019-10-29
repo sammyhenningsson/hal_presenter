@@ -1,11 +1,12 @@
 module HALPresenter
-  class << self
+  module ClassMethods
     attr_accessor :paginate
   end
 
-  # TODO: Support Kaminari and Will_paginate
- 
   class Pagination
+    def self.included(base)
+      base.extend ClassMethods
+    end
 
     class Uri
       def self.parse(str)

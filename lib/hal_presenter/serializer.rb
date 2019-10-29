@@ -4,27 +4,33 @@ require 'hal_presenter/curie_collection'
 
 module HALPresenter
 
-  def self.to_hal(resource, options = {})
-    raise Serializer::Error, "Resource is nil" if resource.nil?
-    options = options.dup
-    presenter = options.delete(:presenter)
-    presenter ||= HALPresenter.lookup_presenter(resource)
-    raise Serializer::Error, "No presenter for #{resource.class}" unless presenter
-    presenter.to_hal(resource, options)
-  end
+  module ClassMethods
+	def to_hal(resource, options = {})
+	  raise Serializer::Error, "Resource is nil" if resource.nil?
+	  options = options.dup
+	  presenter = options.delete(:presenter)
+	  presenter ||= HALPresenter.lookup_presenter(resource)
+	  raise Serializer::Error, "No presenter for #{resource.class}" unless presenter
+	  presenter.to_hal(resource, options)
+	end
 
-  def self.to_collection(resources, options = {})
-    raise Serializer::Error, "resources is nil" if resources.nil?
-    options = options.dup
-    presenter = options.delete(:presenter)
-    presenter ||= HALPresenter.lookup_presenter(resources)
-    raise Serializer::Error, "No presenter for #{resources.first.class}" unless presenter
-    presenter.to_collection(resources, options)
+	def to_collection(resources, options = {})
+	  raise Serializer::Error, "resources is nil" if resources.nil?
+	  options = options.dup
+	  presenter = options.delete(:presenter)
+	  presenter ||= HALPresenter.lookup_presenter(resources)
+	  raise Serializer::Error, "No presenter for #{resources.first.class}" unless presenter
+	  presenter.to_collection(resources, options)
+	end
   end
 
   module Serializer
 
     class Error < StandardError; end
+
+    def self.included(base)
+      base.extend(ClassMethods)
+    end
 
     def to_hal(resource = nil, options = {})
       options = options.dup

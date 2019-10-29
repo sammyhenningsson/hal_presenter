@@ -3,14 +3,16 @@ require 'hal_presenter/super_init'
 
 module HALPresenter
 
-  def self.base_href=(base)
-    @base_href = base&.sub(%r(/*$), '')
-  end
+  module ClassMethods
+    def base_href=(base)
+      @base_href = base&.sub(%r(/*$), '')
+    end
 
-  def self.href(href)
-    return href if (@base_href ||= '').empty?
-    return href if href =~ %r(\A(\w+://)?[^/])
-    @base_href + href
+    def href(href)
+      return href if (@base_href ||= '').empty?
+      return href if href =~ %r(\A(\w+://)?[^/])
+      @base_href + href
+    end
   end
 
   module Links
@@ -54,6 +56,10 @@ module HALPresenter
 
         {rel => hash}
       end
+    end
+
+    def self.included(base)
+      base.extend ClassMethods
     end
 
     def link(rel, value = nil, **kwargs, &block)

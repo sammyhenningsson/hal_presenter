@@ -1,14 +1,19 @@
 require 'json'
 
 module HALPresenter
-
-  def self.from_hal(presenter, payload, resource = nil)
-    presenter.from_hal(payload, resource)
+  module ClassMethods
+    def from_hal(presenter, payload, resource = nil)
+      presenter.from_hal(payload, resource)
+    end
   end
 
   module Deserializer
 
     class Error < StandardError; end
+
+    def self.included(base)
+      base.extend ClassMethods
+    end
 
     def from_hal(payload, resource = nil)
       return if payload.nil? || payload.empty?
