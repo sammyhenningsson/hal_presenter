@@ -1,3 +1,6 @@
+## 1.3.0
+ * Rename conflicting Curies
+ * Fix incorrect embed_depth when multiple embeds
 ## 1.2.0
  * Specify mediatype profile
  * Lookup presenter from single resource or collection
