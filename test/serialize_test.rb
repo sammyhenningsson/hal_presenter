@@ -209,9 +209,8 @@ class SerializerTest < ActiveSupport::TestCase
       link :self, '/grandchild'
       link :foo, '/grand_foo', embed_depth: 1
       curie :c, '/c/{rel}'
-      curie :a, '/a/{rel}'
       attribute :data
-      attribute :c, 'c', embed_depth: 2
+      attribute :c, 'c', embed_depth: 2 # change to nil?
       attribute :c0, 'c0', embed_depth: 0
       attribute :c1, 'c1', embed_depth: 1
       attribute :c2, 'c2', embed_depth: 2
@@ -226,7 +225,9 @@ class SerializerTest < ActiveSupport::TestCase
       attribute :b0, 'b0', embed_depth: 0
       attribute :b1, 'b1', embed_depth: 1
       attribute :b2, 'b2', embed_depth: 2
-      embed :child, presenter_class: c
+      embed :child1, presenter_class: c, embed_depth: 1
+      embed :child2, presenter_class: c, embed_depth: 1
+      embed :children, presenter_class: c, embed_depth: 1
 
     end
     a = Class.new do
@@ -242,9 +243,12 @@ class SerializerTest < ActiveSupport::TestCase
       data: 'parent',
       child: OpenStruct.new(
         data: 'child',
-        child: OpenStruct.new(
-          data: 'grandchild'
-        )
+        child1: OpenStruct.new(data: 'grandchild1'),
+        child2: OpenStruct.new(data: 'grandchild2'),
+        children: [
+          OpenStruct.new(data: 'grandchild3'),
+          OpenStruct.new(data: 'grandchild4'),
+        ]
       )
     )
 
@@ -287,8 +291,19 @@ class SerializerTest < ActiveSupport::TestCase
             }
           },
           _embedded: {
-            child: {
-              data: 'grandchild',
+            child1: {
+                data: 'grandchild1',
+                c: 'c',
+                c2: 'c2',
+                c3: 'c3',
+                _links: {
+                  self: {
+                    href: '/grandchild'
+                  }
+                }
+            },
+            child2: {
+              data: 'grandchild2',
               c: 'c',
               c2: 'c2',
               c3: 'c3',
@@ -297,7 +312,31 @@ class SerializerTest < ActiveSupport::TestCase
                   href: '/grandchild'
                 }
               }
-            }
+            },
+            children: [
+              {
+                data: 'grandchild3',
+                c: 'c',
+                c2: 'c2',
+                c3: 'c3',
+                _links: {
+                  self: {
+                    href: '/grandchild'
+                  }
+                }
+              },
+              {
+                data: 'grandchild4',
+                c: 'c',
+                c2: 'c2',
+                c3: 'c3',
+                _links: {
+                  self: {
+                    href: '/grandchild'
+                  }
+                }
+              }
+            ]
           }
         }
       }

@@ -6,6 +6,7 @@ module HALPresenter
 
   def self.to_hal(resource, options = {})
     raise Serializer::Error, "Resource is nil" if resource.nil?
+    options = options.dup
     presenter = options.delete(:presenter)
     presenter ||= HALPresenter.lookup_presenter(resource)
     raise Serializer::Error, "No presenter for #{resource.class}" unless presenter
@@ -14,6 +15,7 @@ module HALPresenter
 
   def self.to_collection(resources, options = {})
     raise Serializer::Error, "resources is nil" if resources.nil?
+    options = options.dup
     presenter = options.delete(:presenter)
     presenter ||= HALPresenter.lookup_presenter(resources)
     raise Serializer::Error, "No presenter for #{resources.first.class}" unless presenter
@@ -25,6 +27,7 @@ module HALPresenter
     class Error < StandardError; end
 
     def to_hal(resource = nil, options = {})
+      options = options.dup
       options[:_depth] ||= 0
       hash = to_hash(resource, options)
       move_curies_to_root! hash
@@ -37,6 +40,7 @@ module HALPresenter
           "Trying to serialize a collection using #{self} which has no collection info. " \
           "Add a 'collection' spec to the serializer or use another serializer"
       end
+      options = options.dup
       options[:paginate] = HALPresenter.paginate unless options.key? :paginate
       options[:_depth] ||= 0
       hash = to_collection_hash(resources, options)
@@ -73,8 +77,9 @@ module HALPresenter
         serialized.merge! _serialize_embedded(embedded, resources, policy, options)
 
         # Embedded resources
-        options[:_depth] += 1
-        serialized_resources = resources.map { |resource| to_hash(resource, options) }
+        embed_options = options.dup
+        embed_options[:_depth] += 1
+        serialized_resources = resources.map { |resource| to_hash(resource, embed_options) }
         serialized[:_embedded] ||= {}
         serialized[:_embedded].merge!(properties.name => serialized_resources)
       end
@@ -148,13 +153,14 @@ module HALPresenter
         next if policy && !policy.embed?(embed.name)
         resource = embed.value(object, options) or next
         presenter = embed.presenter_class
-        options[:_depth] += 1
+        embed_options = options.dup
+        embed_options[:_depth] += 1
         hash[embed.name] = 
           if resource.is_a? Array
-            _serialize_embedded_collection(resource, presenter, options)
+            _serialize_embedded_collection(resource, presenter, embed_options)
           else
             presenter ||= HALPresenter.lookup_presenter(resource)
-            presenter.to_hash(resource, options)
+            presenter.to_hash(resource, embed_options)
           end
       end
       return {} if serialized.empty?
