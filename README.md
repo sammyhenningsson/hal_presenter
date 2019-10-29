@@ -303,19 +303,17 @@ When a block is passed to `::curie`, the return value of that block is what ends
 class PostSerializer
   extend HALPresenter
 
-  curie :doc { '/api/docs/{rel}' }
+  curie :doc do
+  '/api/docs/{rel}'
+  end
   link :'doc:user', '/users/5'
 end
 
 post = OpenStruct.new(id: 5)
 PostSerializer.to_hal(post)   # => {"_links":{"doc:user":{"href":"/users/5"},"curies":[{"name":"doc","href":"/api/docs/{rel}","templated":true}]}}
 ```
-When a resource is embedded in another resource (see below) all curies are added to the root resource. One benefit of this is that each curie only appear once in the output, instead of once for
-each embedded resource for instance. But be cautious, to not define curies with colliding names.
-For example, if you have two presenters `Foo` and `Bar` each with a curie named `doc` but pointing to different URIs, say `/foo/{rel}` resp. `/bar/{rel}`.
-Then if you make `Foo` embed resources serialized with `Bar` then a collision will occur and a single `doc` curie will be added, with either `/foo/{rel}` or `/bar/{rel}`
-as the target URI.
-To remedy this, give the curies different names.
+When a resource is embedded in another resource all curies are added to the root resource. This ensures that each curie only appear once in the output.
+Note that curies may get renamed if there are conflicts between them. See example in [`::embed`](#embed) for more details.
 
 ### ::namespace
 Multiple links and embedded resources may be grouped together inside a curie namespace. This is done by wrapping them inside a block passed to `::namespace`.
@@ -379,7 +377,6 @@ end
 post = OpenStruct.new(title: "hello")
 PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 ```
-The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding resource to be embedded. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).  
 When a block is passed to `::embed`, then the return value of that block is embedded.
 ``` ruby
 class UserSerializer
@@ -397,8 +394,9 @@ end
 post = OpenStruct.new(title: "hello")
 PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 ```
+The keyword argument `:embed_depth` may be specified to set a max allowed nesting depth for the corresponding resource to be embedded. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).  
  If the resource to be embedded has a registered Serializer then `presenter_class` is not needed.
- ``` ruby
+``` ruby
 class User
   def name; "bengt"; end
 end
@@ -417,6 +415,82 @@ end
 post = OpenStruct.new(title: "hello", author: User.new)
 PostSerializer.to_hal(post)   # => {"_embedded":{"author":{"name":"bengt"}}}
 ```
+If the embedded resource has a curie then it will be added to the root resource rather than the embedded resource. If there is a curie name conflict between the root resource and any embedded resources,
+one or many of them will get renamed.
+``` ruby
+class FooSerializer
+  extend HALPresenter
+  attribute :info
+  link :foo, curie: :doc do
+    '/foo'
+  end
+  curie :doc do
+    '/doc/{rel}'
+  end
+end
+
+class BarSerializer
+  extend HALPresenter
+  attribute :info
+  link :bar, curie: :doc do
+    '/bar'
+  end
+  curie :doc do
+    '/conflicting/{rel}'
+  end
+end
+
+class PostSerializer
+  extend HALPresenter
+  curie :doc do
+    '/doc/{rel}'
+  end
+  embed :foo, presenter_class: FooSerializer
+  embed :bar, presenter_class: BarSerializer
+end
+
+post = OpenStruct.new(
+  foo: OpenStruct.new(info: "doc means the same thing for foo"),
+  bar: OpenStruct.new(info: "doc conflicts with Foo and Post. It must be renamed!")
+)
+PostSerializer.to_hal(post)   # =>
+                              # {
+                              #   "_links": {
+                              #     "curies": [
+                              #       {
+                              #         "name": "doc",
+                              #         "href": "/doc/{rel}",
+                              #         "templated": true
+                              #       },
+                              #       {
+                              #         "name": "doc0",
+                              #         "href": "/conflicting/{rel}",
+                              #         "templated": true
+                              #       }
+                              #     ]
+                              #   },
+                              #   "_embedded": {
+                              #     "foo": {
+                              #       "info": "doc means the same thing for foo",
+                              #       "_links": {
+                              #         "doc:foo": {
+                              #           "href": "/foo"
+                              #         }
+                              #       }
+                              #     },
+                              #     "bar": {
+                              #       "info": "doc conflicts with Foo and Post. It must be renamed!",
+                              #       "_links": {
+                              #         "doc0:bar": {
+                              #           "href": "/bar"
+                              #         }
+                              #       }
+                              #     }
+                              #   }
+                              # }
+```
+Note that the curie in `FooSerializer` has the same href as the curie in `PostSerializer`, thus it remains unaffected. The curie in `BarSerializer` however has another href and needs to be renamed. The new name is `doc0`. Any rels (links and embedded) refering to the renamed curie will be updated with the new curie name (e.g. `doc0:bar`).  
+
 ### collection
 The `collection` class method is used to make a serializer capable of serializing an array of resources. Serializing collections may of course be done with separate serializer, but should we want to use the same serializer class for both then `::collection` will make that work. The method takes a required keyword paramter named `:of`, which will be used as the key in the corresponding _\_embedded_ property. Each entry in the array given to `::to_collection` will then be serialized with this serializer.
 ``` ruby
