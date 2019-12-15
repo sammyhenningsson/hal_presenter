@@ -5,23 +5,23 @@ require 'hal_presenter/curie_collection'
 module HALPresenter
 
   module ClassMethods
-	def to_hal(resource, options = {})
-	  raise Serializer::Error, "Resource is nil" if resource.nil?
-	  options = options.dup
-	  presenter = options.delete(:presenter)
-	  presenter ||= HALPresenter.lookup_presenter(resource)
-	  raise Serializer::Error, "No presenter for #{resource.class}" unless presenter
-	  presenter.to_hal(resource, options)
-	end
+    def to_hal(resource, options = {})
+      raise Serializer::Error, "Resource is nil" if resource.nil?
+      options = options.dup
+      presenter = options.delete(:presenter)
+      presenter ||= HALPresenter.lookup_presenter(resource)
+      raise Serializer::Error, "No presenter for #{resource.class}" unless presenter
+      presenter.to_hal(resource, options)
+    end
 
-	def to_collection(resources, options = {})
-	  raise Serializer::Error, "resources is nil" if resources.nil?
-	  options = options.dup
-	  presenter = options.delete(:presenter)
-	  presenter ||= HALPresenter.lookup_presenter(resources)
-	  raise Serializer::Error, "No presenter for #{resources.first.class}" unless presenter
-	  presenter.to_collection(resources, options)
-	end
+    def to_collection(resources, options = {})
+      raise Serializer::Error, "resources is nil" if resources.nil?
+      options = options.dup
+      presenter = options.delete(:presenter)
+      presenter ||= HALPresenter.lookup_presenter(resources)
+      raise Serializer::Error, "No presenter for #{resources.first.class}" unless presenter
+      presenter.to_collection(resources, options)
+    end
   end
 
   module Serializer
@@ -127,7 +127,7 @@ module HALPresenter
 
     def _serialize_attributes(attributes, resource, policy, options)
       attributes.each_with_object({}) do |attribute, hash|
-        next unless nested_depth_ok?(attribute, options[:_depth])
+        next unless attribute.nested_depth_ok? options[:_depth]
         next if policy && !policy.attribute?(attribute.name)
         hash[attribute.name] = attribute.value(resource, options)
       end
@@ -135,7 +135,7 @@ module HALPresenter
 
     def _serialize_links(links, curies, resource, policy, options)
       serialized = links.each_with_object({}) do |link, hash|
-        next unless nested_depth_ok?(link, options[:_depth])
+        next unless link.nested_depth_ok? options[:_depth]
         next if policy && !policy.link?(link.rel)
         hash.merge! link.to_h(resource, options)
       end
@@ -147,7 +147,7 @@ module HALPresenter
 
     def _serialize_curies(curies, resource, options)
       curies.each_with_object([]) do |curie, array|
-        next unless nested_depth_ok?(curie, options[:_depth])
+        next unless curie.nested_depth_ok? options[:_depth]
         hash = curie.to_h(resource, options)
         array << hash unless hash.empty?
       end
@@ -155,7 +155,7 @@ module HALPresenter
 
     def _serialize_embedded(embedded, object, policy, options)
       serialized = embedded.each_with_object({}) do |embed, hash|
-        next unless nested_depth_ok?(embed, options[:_depth])
+        next unless embed.nested_depth_ok? options[:_depth]
         next if policy && !policy.embed?(embed.name)
         resource = embed.value(object, options) or next
         presenter = embed.presenter_class
@@ -191,11 +191,6 @@ module HALPresenter
 
     def policy_for(resource, options)
       policy_class&.new(options[:current_user], resource, options)
-    end
-
-    def nested_depth_ok?(property, level)
-      return true unless embed_depth = property.embed_depth
-      level <= embed_depth
     end
   end
 end

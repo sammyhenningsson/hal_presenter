@@ -28,6 +28,11 @@ module HALPresenter
       self
     end
 
+    def nested_depth_ok?(level)
+      return true unless embed_depth
+      level <= embed_depth
+    end
+
     private
 
     def initialize_copy(source)
