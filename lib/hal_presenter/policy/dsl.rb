@@ -1,19 +1,19 @@
 module HALPresenter
   module Policy
     module DSL
-
       class Rules
+        DEFAULT_PROC = Proc.new { false }
 
         def attributes
-          @attributes ||= Hash.new(Proc.new { false })
+          @attributes ||= Hash.new(DEFAULT_PROC)
         end
 
         def links
-          @links ||= Hash.new(Proc.new { false })
+          @links ||= Hash.new(DEFAULT_PROC)
         end
 
         def embedded
-          @embedded ||= Hash.new(Proc.new { false })
+          @embedded ||= Hash.new(DEFAULT_PROC)
         end
 
         private :attributes, :links, :embedded
@@ -53,34 +53,31 @@ module HALPresenter
         def strip_curie(rel)
           rel.to_s.split(':', 2)[1]&.to_sym
         end
-
       end
 
       module ClassMethods
-
         def allow_by_default(*types)
           rules.defaults(*types, value: true)
         end
 
-        def attribute(*names)
-          b = block_given? ? Proc.new : Proc.new { true }
-          names.each { |name| rules.add_attribute(name, b) }
+        def attribute(*names, &block)
+          block ||= Proc.new { true }
+          names.each { |name| rules.add_attribute(name, block) }
         end
 
-        def link(*rels)
-          b = block_given? ? Proc.new : Proc.new { true }
-          rels.each { |rel| rules.add_link(rel, b) }
+        def link(*rels, &block)
+          block ||= Proc.new { true }
+          rels.each { |rel| rules.add_link(rel, block) }
         end
 
-        def embed(*names)
-          b = block_given? ? Proc.new : Proc.new { true }
-          names.each { |name| rules.add_embed(name, b) }
+        def embed(*names, &block)
+          block ||= Proc.new { true }
+          names.each { |name| rules.add_embed(name, block) }
         end
 
         def rules
           @rules ||= Rules.new
         end
-
       end
 
       def self.included(mod)
@@ -94,24 +91,28 @@ module HALPresenter
       end
 
       def attribute?(name)
-        run self.class.rules.attribute_rule_for(name)
+        __check __rules.attribute_rule_for(name)
       end
 
       def link?(rel)
         return true if rel == :self
-        run self.class.rules.link_rule_for(rel)
+        __check __rules.link_rule_for(rel)
       end
 
       def embed?(name)
-        run self.class.rules.embed_rule_for(name)
+        __check __rules.embed_rule_for(name)
       end
 
       private
 
       attr_reader :current_user, :resource, :options
 
-      def run(block)
-        instance_eval(&block) && true || false
+      def __rules
+        self.class.rules
+      end
+
+      def __check(block)
+        !!instance_eval(&block)
       end
 
     end
