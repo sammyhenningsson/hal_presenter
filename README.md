@@ -612,6 +612,7 @@ Consider the following payload representing a post resource:
 }
 ```
 Here the post attributes `id`, `message` as well as the _self_ link and the embedded comments all have a depth of 0. The properties of each embedded comment (attributes `id`, `comment` and embedded user) have a depth of 1. The properties of the user resources (embedded in the comments, which in turn are embedded in the post resource) have a depth of 2.  
+When a collection is serialized (using `::to_collection`) the embedded resources will have the same depth as attributes and links on collection (e.g. depth = 0 unless the collection itself is embedded).  
 The purpose of specifying `embed_depth` is to be able skip serializing properties when embeddeed.  
 For example, when you serialize a collection of resources, perhaps you would like for each resource in that collection to only serialize a few properties, making it kind of like a "preview" of each resource.
 
@@ -1021,3 +1022,31 @@ class UserPolicy
   end
 ```
 Notice the instance method `#edit?` which is typically used by [Pundit](https://github.com/elabs/pundit). That method is called from the block belonging to the rule for the edit link. This means that we can use the same policy class both for serialization and for authorization (and have all the rules in one place). This is great since we should only provide links to actions that are possible (authorized) and we don't want to sync this between controller code and serialization code.
+
+Policies can be inherited, so probably it makes sense to have a base policy that other policies can inherit from. Like:
+```ruby
+class BasePolicy
+  include HALPresenter::Policy::DSL
+
+  def authenticated?
+    !!current_user
+  end
+end
+
+class CommentPolicy < BasePolicy
+  link :post
+end
+```
+
+Sometimes policies may depend on other policies. For thoses cases we can delegate to another policy. Like:
+```ruby
+class CommentPolicy < BasePolicy
+  def read?
+    delegate_to PostPolicy, :read?, resource: resource.post
+  end
+end
+```
+Besides `#delegate_to(policy_class, method, resource: nil, args: nil, **opts)`, there is also:
+ - `#delegate_attribute(policy_class, attr, **opts)`
+ - `#delegate_link(policy_class, rel, **opts)`
+ - `#delegate_embed(policy_class, rel, **opts)`
