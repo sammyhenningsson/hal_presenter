@@ -83,9 +83,7 @@ module HALPresenter
         serialized.merge! _serialize_embedded(embedded, resources, policy, options)
 
         # Embedded resources
-        embed_options = options.dup
-        embed_options[:_depth] += 1
-        serialized_resources = resources.map { |resource| to_hash(resource, embed_options) }
+        serialized_resources = resources.map { |resource| to_hash(resource, options.dup) }
         serialized[:_embedded] ||= {}
         serialized[:_embedded].merge!(properties.name => serialized_resources)
       end
