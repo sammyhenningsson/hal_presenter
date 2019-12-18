@@ -107,6 +107,27 @@ module HALPresenter
 
       attr_reader :current_user, :resource, :options
 
+      def delegate_attribute(policy_class, attr, **opts)
+        delegate_to(policy_class, :attribute?, args: attr, **opts)
+      end
+
+      def delegate_link(policy_class, rel, **opts)
+        delegate_to(policy_class, :link?, args: rel, **opts)
+      end
+
+      def delegate_embed(policy_class, rel, **opts)
+        delegate_to(policy_class, :embed?, args: rel, **opts)
+      end
+
+      def delegate_to(policy_class, method, resource: nil, args: nil, **opts)
+        resource ||= send(:resource)
+        opts = options.merge(opts)
+        policy = policy_class.new(current_user, resource, opts)
+        args = Array(args)
+        args.unshift(method)
+        policy.send(*args)
+      end
+
       def __rules
         self.class.rules
       end

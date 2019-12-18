@@ -87,4 +87,55 @@ class PolicyDSLTest < ActiveSupport::TestCase
     assert_equal true, policy.embed?(:child1)
     assert_equal true, policy.embed?(:child2)
   end
+
+  test '#delegate_attribute' do
+    policy_class = Class.new do
+      include HALPresenter::Policy::DSL
+
+      attribute :bar do
+        resource.title == 'hello'
+      end
+    end
+
+    @policy.attribute :foo do
+      delegate_attribute policy_class, :bar
+    end
+
+    policy = @policy.new(@user, @resource)
+    assert policy.attribute?(:foo)
+  end
+
+  test '#delegate_link' do
+    policy_class = Class.new do
+      include HALPresenter::Policy::DSL
+
+      link :bar do
+        resource == 1337
+      end
+    end
+
+    @policy.link :foo do
+      delegate_link policy_class, :bar, resource: 1337
+    end
+
+    policy = @policy.new(@user, @resource)
+    assert policy.link?(:foo)
+  end
+
+  test '#delegate_to method' do
+    policy_class = Class.new do
+      include HALPresenter::Policy::DSL
+
+      def baz
+        options[:foobar] == '1337'
+      end
+    end
+
+    @policy.attribute :foo do
+      delegate_to policy_class, :baz, foobar: '1337'
+    end
+
+    policy = @policy.new(@user, @resource)
+    assert policy.attribute?(:foo)
+  end
 end
