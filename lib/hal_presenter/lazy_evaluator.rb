@@ -7,7 +7,7 @@ module HALPresenter
 
     def initialize(block, context)
       @context = context
-      define_singleton_method(:evaluate_block, &block)
+      define_singleton_method(:call, &block)
     end
 
     def update_context(context)
@@ -16,16 +16,20 @@ module HALPresenter
 
     def evaluate(resource, options)
       @resource = resource
-      @options = options || {}
-      evaluate_block
+      @options = (options || {}).dup
+      call
     ensure
-      @resource = nil
-      @options = nil
+      clear_state
     end
 
     private
 
     attr_reader :context
+
+    def clear_state
+      @resource = nil
+      @options = nil
+    end
 
     def method_missing(method, *args, &block)
       return super unless context.respond_to?(method)

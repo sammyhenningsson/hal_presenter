@@ -7,7 +7,7 @@ module HALPresenter
       return default unless superclass.respond_to?(method, true)
 
       if default.respond_to? :each
-        superclass.send(method).map do |prop|
+        Array(superclass.send(method)).map do |prop|
           prop.clone.change_context(self)
         end
       else
