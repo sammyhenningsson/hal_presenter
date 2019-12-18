@@ -1,3 +1,7 @@
+## 1.4.0
+ * Add methods to delegate to another policy
+ * Descrease depth by 1 for embedded collection resources
+ * Fix ruby 2.7 warnings
 ## 1.3.0
  * Rename conflicting Curies
  * Fix incorrect embed_depth when multiple embeds
