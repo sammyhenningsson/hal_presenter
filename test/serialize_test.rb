@@ -494,9 +494,14 @@ class SerializerTest < ActiveSupport::TestCase
             a: {
               href: 'CC'
             },
-            b: {
-              href: 'bc'
-            },
+            b: [
+              {
+                href: 'B'
+              },
+              {
+                href: 'bc'
+              }
+            ],
             c: {
               href: 'C'
             },

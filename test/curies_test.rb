@@ -4,7 +4,7 @@ module HALPresenter
   describe Serializer do
     let(:mod) do
       Module.new do
-        # Add test classes to an anonymous module prevents these clases
+        # Add test classes to an anonymous module prevents these classes
         # to conflict with other tests.
         # self:: forces Ruby to wait to bind the constant.
         # See https://www.ruby-forum.com/t/enumerating-constants-in-anonymous-modules/150537/2

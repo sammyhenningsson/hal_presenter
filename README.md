@@ -50,63 +50,65 @@ class PostSerializer
     "/posts/#{resource.id}" if resource.author.id == options[:current_user]
   end
   
-  embed :comments
+  embed :recent_comments
 end
 
 ```
 Instances of `Post` can now be serialized with `HALPresenter.to_hal(post, current_user: some_user)` which will produce the following (assuming the current user is the author of the post. Else the edit/delete links would not be present):
 
 ``` ruby
-{   
-    "characters": 25,
-    "text": "some very important stuff",
+{
+  "text": "some very important stuff",
+  "characters": 25,
     "_links": {
-        "author": {
-            "href": "/users/8"
-        },  
-        "delete": {
-            "href": "/posts/5"
-        },  
-        "edit": {
-            "href": "/posts/5/edit"
-        },  
-        "self": {
-            "href": "/posts/5"
-        }
+    "self": {
+      "href": "/posts/5"
     },
-    "_embedded": {
-        "comments": {
-            "count": 2,
-            "_links": {
-                "self": {
-                    "href": "/posts/5/comments"
-                }
-            },
-            "_embedded": {
-                "comments": [
-                    {
-                        "comment": "lorem ipsum",
-                        "_links": { 
-                            "self": {
-                                "href": "/posts/5/comment/1"
-                            }
-                        }
-                    },
-                    {
-                        "comment": "dolor sit",
-                        "_links": { 
-                            "self": {
-                                "href": "/posts/5/comment/2"
-                            }
-                        }
-                    }
-                ]
-            }
-        }
+    "author": {
+      "href": "/users/8"
+    },
+    "edit": {
+      "href": "/posts/5/edit"
+    },
+    "delete": {
+      "href": "/posts/5"
     }
+  },
+  "_embedded": {
+    "recent_comments": {
+      "count": 2,
+      "_links": {
+        "self": {
+          "href": "/posts/5/recent_comments"
+        }
+      },
+      "_embedded": {
+        "comments": [
+          {
+            "comment": "lorem ipsum",
+            "_links": {
+              "self": {
+                "href": "/posts/5/comment/1"
+              }
+            }
+          },
+          {
+            "comment": "dolor sit",
+            "_links": {
+              "self": {
+                "href": "/posts/5/comment/2"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
 }
-
 ```
+_Note_: In the output above, `recent_comments` is a collection and collections have their items embedded. Since this collection is
+embedded in the post resource that why two levels of embedding.
+
 
 ## Defining a Serializer
 Serializers are defined by extending `HALPresenter` in the begining of the class declaration. This will add the following class methods:
@@ -277,6 +279,33 @@ end
 post = OpenStruct.new(id: 5)
 PostSerializer.to_hal(post)   # => {"_links": {"self": {"href": "/posts/5"}}}
 ```
+Multiple links can have the same relation. If so they will be serialized as an array.
+```ruby
+class PostSerializer
+  extend HALPresenter
+
+  link :item, "/foo"
+
+  link :item do
+    "/bar"
+  end
+end
+
+PostSerializer.to_hal   # =>
+                        # {
+                        #   "_links": {
+                        #     "item": [
+                        #       {
+                        #         "href": "/foo"
+                        #       },
+                        #       {
+                        #         "href": "/bar"
+                        #       }
+                        #     ]
+                        #   }
+                        # }
+```
+
 The following options may be given to `::link`:
 - `embed_depth` - sets a max allowed nesting depth for the corresponding link to be serialized. See [`embed_depth`](#keyword-argument-embed_depth-passed-to-attribute-link-curie-and-embed).
 - `curie` - prepends a curie to the rel.
@@ -1035,6 +1064,10 @@ end
 
 class CommentPolicy < BasePolicy
   link :post
+
+  link :comment do
+    authenticated?
+  end
 end
 ```
 

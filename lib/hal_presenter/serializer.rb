@@ -133,9 +133,19 @@ module HALPresenter
 
     def _serialize_links(links, curies, resource, policy, options)
       serialized = links.each_with_object({}) do |link, hash|
+        rel = link.rel
         next unless link.nested_depth_ok? options[:_depth]
-        next if policy && !policy.link?(link.rel)
-        hash.merge! link.to_h(resource, options)
+        next if policy && !policy.link?(rel)
+
+        link_hash = link.to_h(resource, options)
+        next if link_hash.empty?
+
+        if hash.key? rel
+          hash[rel] = [hash[rel]] unless hash[rel].is_a? Array
+          hash[rel] << link_hash
+        else
+          hash.merge!(rel => link_hash)
+        end
       end
       curies = _serialize_curies(curies, resource, options)
       serialized[:curies] = curies if curies.any?

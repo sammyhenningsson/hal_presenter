@@ -46,15 +46,13 @@ module HALPresenter
         href = value(resource, options)
         return {} unless href
 
-        hash = {href: HALPresenter.href(href)}.tap do |h|
-          h[:type] = type if type
-          h[:deprecation] = deprecation if deprecation
-          h[:profile] = profile if profile
-          h[:title] = title if title
-          h[:templated] = templated if templated
+        {href: HALPresenter.href(href)}.tap do |hash|
+          hash[:type]        = type        if type
+          hash[:deprecation] = deprecation if deprecation
+          hash[:profile]     = profile     if profile
+          hash[:title]       = title       if title
+          hash[:templated]   = templated   if templated
         end
-
-        {rel => hash}
       end
     end
 
@@ -68,7 +66,6 @@ module HALPresenter
       end
 
       kwargs[:context] ||= self
-      links.delete_if { |link| link.rel == rel }
       Link.new(rel, value, **kwargs, &block).tap do |link|
         links << link
       end
