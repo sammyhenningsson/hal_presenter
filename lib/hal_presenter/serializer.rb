@@ -6,21 +6,24 @@ module HALPresenter
 
   module ClassMethods
     def to_hal(resource, options = {})
-      raise Serializer::Error, "Resource is nil" if resource.nil?
       options = options.dup
-      presenter = options.delete(:presenter)
-      presenter ||= HALPresenter.lookup_presenter(resource)
-      raise Serializer::Error, "No presenter for #{resource.class}" unless presenter
-      presenter.to_hal(resource, options)
+      presenter!(resource, options).to_hal(resource, options)
     end
 
     def to_collection(resources, options = {})
-      raise Serializer::Error, "resources is nil" if resources.nil?
       options = options.dup
+      presenter!(resources, options).to_collection(resources, options)
+    end
+
+    private
+
+    def presenter!(resources, options = {})
+      raise Serializer::Error, "resources is nil" if resources.nil?
       presenter = options.delete(:presenter)
       presenter ||= HALPresenter.lookup_presenter(resources)
       raise Serializer::Error, "No presenter for #{resources.first.class}" unless presenter
-      presenter.to_collection(resources, options)
+
+      presenter
     end
   end
 
@@ -37,6 +40,8 @@ module HALPresenter
       options[:_depth] ||= 0
       hash = to_hash(resource, options)
       move_curies_to_root! hash
+      return hash if options[:as_hash]
+
       JSON.generate(hash)
     end
 
@@ -51,6 +56,8 @@ module HALPresenter
       options[:_depth] ||= 0
       hash = to_collection_hash(resources, options)
       move_curies_to_root! hash
+      return hash if options[:as_hash]
+
       JSON.generate(hash)
     end
 
