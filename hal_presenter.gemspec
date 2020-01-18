@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 Gem::Specification.new do |gem|
   gem.name        = 'hal_presenter'
-  gem.version     = '1.4.0'
+  gem.version     = '1.5.0'
   gem.summary     = "JSON HAL serializer"
   gem.description = <<~EOS
                     A DSL for serializing resources according to

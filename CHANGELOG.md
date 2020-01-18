@@ -1,3 +1,6 @@
+## 1.5.0
+ * Support multiple links with the same rel
+ * Return serialized hash when option :as_hash is true
 ## 1.4.0
  * Add methods to delegate to another policy
  * Descrease depth by 1 for embedded collection resources
