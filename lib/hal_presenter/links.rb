@@ -66,6 +66,12 @@ module HALPresenter
       end
 
       kwargs[:context] ||= self
+      rel = rel.to_sym
+
+      if rel == :self || kwargs[:replace_parent]
+        links.delete_if { |link| link.rel == rel }
+      end
+
       Link.new(rel, value, **kwargs, &block).tap do |link|
         links << link
       end

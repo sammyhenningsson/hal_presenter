@@ -438,11 +438,13 @@ class SerializerTest < ActiveSupport::TestCase
     presenter_a = Class.new do
       extend HALPresenter
       def self.a; "A"; end
+      link :self, '/self/a'
       link(:a) { a << "#{options[:b] && b}" << "#{options[:c] && c}" }
     end
 
     presenter_b = Class.new(presenter_a) do
       def self.b; "B"; end
+      link 'self', '/self/b'
       link(:b) { b }
       link(:x) { "#{a}" }
     end
@@ -459,6 +461,9 @@ class SerializerTest < ActiveSupport::TestCase
       assert_sameish_hash(
         {
           _links: {
+            self: {
+              href: '/self/a'
+            },
             a: {
               href: 'A'
             }
@@ -472,6 +477,9 @@ class SerializerTest < ActiveSupport::TestCase
       assert_sameish_hash(
         {
           _links: {
+            self: {
+              href: '/self/b'
+            },
             a: {
               href: 'A'
             },
@@ -491,6 +499,9 @@ class SerializerTest < ActiveSupport::TestCase
       assert_sameish_hash(
         {
           _links: {
+            self: {
+              href: '/self/b'
+            },
             a: {
               href: 'CC'
             },
