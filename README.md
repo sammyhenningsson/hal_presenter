@@ -121,8 +121,8 @@ Serializers are defined by extending `HALPresenter` in the begining of the class
 - [`::namespace(curie, &block)`](#namespace)
 - [`::embed(name, value = nil, embed_depth: nil, presenter_class: nil, &block)`](#embed)
 - [`::collection`](#collection)
-- [`::to_hal(resource = nil, options = {})`](#to_hal)
-- [`::to_collection(resources = [], options = {})`](#to_collection)
+- [`::to_hal(resource = nil, **options)`](#to_hal)
+- [`::to_collection(resources = [], **options)`](#to_collection)
 - [`::post_serialize(&block)`](#post_serialize)
 - [`::from_hal(payload, resource = nil)`](#from_hal)
 
@@ -557,7 +557,7 @@ list = (1..2).map do |i|
   OpenStruct.new(id: i, title: "hello#{i}")
 end
 
-PostSerializer.to_collection(list, {page: 1, next: 2})   # => {"number_of_posts":2,"_links":{"self":{"href":"/posts?page=1"},"next":{"href":"/posts?page=2"}},"_embedded":{"posts":[{"id":1,"title":"hello1"},{"id":2,"title":"hello2"}]}}"
+PostSerializer.to_collection(list, page: 1, next: 2)   # => {"number_of_posts":2,"_links":{"self":{"href":"/posts?page=1"},"next":{"href":"/posts?page=2"}},"_embedded":{"posts":[{"id":1,"title":"hello1"},{"id":2,"title":"hello2"}]}}"
 ```
 The response above with some newlines.
 ```sh
@@ -656,7 +656,7 @@ class PostSerializer
 end
 
 post = OpenStruct.new(id: 5, title: "hello")
-PostSerializer.to_hal(post, {extra: 'world'})   # => {"title": "5 -- hello -- world"}
+PostSerializer.to_hal(post, extra: 'world')   # => {"title": "5 -- hello -- world"}
 ```
 These blocks also have access to the scope where the block was created (e.g. the Serializer class)
 ``` ruby
@@ -687,10 +687,10 @@ end
 
 user = OpenStruct.new(id: 5)
 post = OpenStruct.new(id: 1, title: "hello", author_id: 2)
-PostSerializer.to_hal(post, {current_user: user})   # => {"title":"hello","foo":null,"_links":{"self":{"href":"/posts/1"}}}
+PostSerializer.to_hal(post, current_user: user)   # => {"title":"hello","foo":null,"_links":{"self":{"href":"/posts/1"}}}
 
 user = OpenStruct.new(id: 2)
-PostSerializer.to_hal(post, {current_user: user})   # => "{"title":"hello","foo":null,"_links":{"self":{"href":"/posts/1"},"edit":{"href":"/posts/1"}}}"
+PostSerializer.to_hal(post, current_user: user)   # => "{"title":"hello","foo":null,"_links":{"self":{"href":"/posts/1"},"edit":{"href":"/posts/1"}}}"
 ```
 
 

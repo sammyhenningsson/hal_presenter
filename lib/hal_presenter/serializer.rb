@@ -5,19 +5,19 @@ require 'hal_presenter/curie_collection'
 module HALPresenter
 
   module ClassMethods
-    def to_hal(resource, options = {})
+    def to_hal(resource, **options)
       options = options.dup
       presenter!(resource, options).to_hal(resource, options)
     end
 
-    def to_collection(resources, options = {})
+    def to_collection(resources, **options)
       options = options.dup
       presenter!(resources, options).to_collection(resources, options)
     end
 
     private
 
-    def presenter!(resources, options = {})
+    def presenter!(resources, **options)
       raise Serializer::Error, "resources is nil" if resources.nil?
       presenter = options.delete(:presenter)
       presenter ||= HALPresenter.lookup_presenter(resources)
@@ -35,7 +35,7 @@ module HALPresenter
       base.extend(ClassMethods)
     end
 
-    def to_hal(resource = nil, options = {})
+    def to_hal(resource = nil, **options)
       options = options.dup
       options[:_depth] ||= 0
       hash = to_hash(resource, options)
@@ -45,7 +45,7 @@ module HALPresenter
       JSON.generate(hash)
     end
 
-    def to_collection(resources = [], options = {})
+    def to_collection(resources = [], **options)
       unless can_serialize_collection?
         raise Error,
           "Trying to serialize a collection using #{self} which has no collection info. " \
