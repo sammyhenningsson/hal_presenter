@@ -31,6 +31,11 @@ class SerializerTest < ActiveSupport::TestCase
 
     attribute :title
     attribute :comment
+    attribute :number_value, 5
+    attribute :true_value, true
+    attribute :false_value, false
+    attribute :nil_value, nil
+
     link :self do
       "/items/#{resource.id}"
     end
@@ -65,6 +70,10 @@ class SerializerTest < ActiveSupport::TestCase
     @expected = {
       title: 'some_title',
       comment: 'some comments',
+      number_value: 5,
+      true_value: true,
+      false_value: false,
+      nil_value: nil,
       _links: {
         self: {
           href: '/items/5'

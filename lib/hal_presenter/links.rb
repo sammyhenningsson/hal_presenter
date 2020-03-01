@@ -24,7 +24,7 @@ module HALPresenter
 
       alias rel name
 
-      def initialize(rel, value = nil, **kwargs, &block)
+      def initialize(rel, value = NO_VALUE, **kwargs, &block)
         @type =         kwargs[:type].freeze
         @deprecation =  kwargs[:deprecation].freeze
         @profile =      kwargs[:profile].freeze

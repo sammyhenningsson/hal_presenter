@@ -5,10 +5,10 @@ module HALPresenter
   module Attributes
     include SuperInit
 
-    def attribute(*args, **kwargs, &block)
+    def attribute(name, value = Property::NO_VALUE, **kwargs, &block)
       kwargs[:context] ||= self
-      attributes.delete_if { |attr| attr.name == args.first }
-      Property.new(*args, **kwargs, &block).tap do |attr|
+      attributes.delete_if { |attr| attr.name == name }
+      Property.new(name, value, **kwargs, &block).tap do |attr|
         attributes << attr
       end
     end

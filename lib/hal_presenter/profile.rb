@@ -4,7 +4,7 @@ module HALPresenter
   module Profile
     include SuperInit
 
-    def profile(value = nil, **kwargs, &block)
+    def profile(value = Property::NO_VALUE, **kwargs, &block)
       if value.nil? && !block_given?
         raise 'profile must be called with non nil value or be given a block'
       end
