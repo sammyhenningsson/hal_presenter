@@ -1,3 +1,7 @@
+## 1.5.1
+ * Fix problem with rendering falsey values
+ * Fix ruby 2.7 warnings
+ * Do not put inherited self links into array
 ## 1.5.0
  * Support multiple links with the same rel
  * Return serialized hash when option :as_hash is true
