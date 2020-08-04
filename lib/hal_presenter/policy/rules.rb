@@ -3,16 +3,10 @@ module HALPresenter
     class Rules
       DEFAULT_PROC = Proc.new { false }
 
-      def attributes
-        @attributes ||= Hash.new(DEFAULT_PROC)
-      end
+      attr_accessor :transform_rels
 
-      def links
-        @links ||= Hash.new(DEFAULT_PROC)
-      end
-
-      def embedded
-        @embedded ||= Hash.new(DEFAULT_PROC)
+      def initialize
+        @transform_rels = true
       end
 
       def dup
@@ -22,8 +16,6 @@ module HALPresenter
           copy.instance_variable_set(:@embedded, embedded.dup)
         end
       end
-
-      private :attributes, :links, :embedded
 
       def defaults(*types, value: false)
         types.each do |t|
@@ -40,25 +32,55 @@ module HALPresenter
       end
 
       def link_rule_for(rel)
+        rel = transform(rel)
         return links[rel] if links.key? rel
+
         links[strip_curie(rel)]
       end
 
       def add_link(rel, block)
+        rel = transform(rel)
         links[rel] = block
       end
 
       def embed_rule_for(name)
+        name = transform(name)
         return embedded[name] if embedded.key? name
+
         embedded[strip_curie(name)]
       end
 
       def add_embed(name, block)
+        name = transform(name)
         embedded[name] = block
+      end
+
+      private
+
+      def attributes
+        @attributes ||= Hash.new(DEFAULT_PROC)
+      end
+
+      def links
+        @links ||= Hash.new(DEFAULT_PROC)
+      end
+
+      def embedded
+        @embedded ||= Hash.new(DEFAULT_PROC)
       end
 
       def strip_curie(rel)
         rel.to_s.split(':', 2)[1]&.to_sym
+      end
+
+      def transform_rels?
+        @transform_rels
+      end
+
+      def transform(rel)
+        return rel unless transform_rels?
+
+        rel.to_s.tr('-', '_').to_sym
       end
     end
   end

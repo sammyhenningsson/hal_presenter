@@ -30,6 +30,14 @@ module HALPresenter
         def rules
           @rules ||= Rules.new
         end
+
+        def no_transform_rels
+          rules.transform_rels = false
+        end
+
+        def transform_rels(value = true)
+          rules.transform_rels = !!value
+        end
       end
 
       def self.included(mod)
@@ -87,7 +95,6 @@ module HALPresenter
       def __check(block)
         !!instance_eval(&block)
       end
-
     end
   end
 end
