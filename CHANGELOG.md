@@ -1,3 +1,7 @@
+## 1.6.0
+ * Update certificate and email address
+ * Convert dash to underscore in rels
+ * Make policies inherit rules from parent policy
 ## 1.5.1
  * Fix problem with rendering falsey values
  * Fix ruby 2.7 warnings
