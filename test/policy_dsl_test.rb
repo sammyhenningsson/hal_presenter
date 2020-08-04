@@ -88,6 +88,37 @@ class PolicyDSLTest < ActiveSupport::TestCase
     assert_equal true, policy.embed?(:child2)
   end
 
+  test 'inheritance' do
+    @policy.attribute :foo
+    @policy.link :bar
+    @policy.embed :baz
+
+    @policy.attribute :to_be_overridden
+    @policy.link :to_be_overridden
+    @policy.embed :to_be_overridden
+
+    @policy.define_method :authenticated? do
+      options[:authenticated]
+    end
+
+    child_policy_class = Class.new(@policy)
+
+    child_policy_class.attribute(:to_be_overridden) { false }
+    child_policy_class.link(:to_be_overridden) { false }
+    child_policy_class.embed(:to_be_overridden) { false }
+
+    policy = child_policy_class.new(@user, @resource, authenticated: :yes)
+    assert_equal true, policy.attribute?(:foo)
+    assert_equal true, policy.link?(:bar)
+    assert_equal true, policy.embed?(:baz)
+
+    assert_equal false, policy.attribute?(:to_be_overridden)
+    assert_equal false, policy.link?(:to_be_overridden)
+    assert_equal false, policy.embed?(:to_be_overridden)
+
+    assert_equal :yes, policy.authenticated?
+  end
+
   test '#delegate_attribute' do
     policy_class = Class.new do
       include HALPresenter::Policy::DSL
