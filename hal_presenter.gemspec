@@ -8,7 +8,7 @@ Gem::Specification.new do |gem|
                     HypertextApplicationLanguage.
                     EOS
   gem.authors     = ["Sammy Henningsson"]
-  gem.email       = 'sammy.henningsson@gmail.com'
+  gem.email       = 'sammy.henningsson@hey.com'
   gem.homepage    = "https://github.com/sammyhenningsson/hal_presenter"
   gem.license     = "MIT"
 
