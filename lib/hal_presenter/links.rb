@@ -2,21 +2,20 @@ require 'hal_presenter/property'
 require 'hal_presenter/super_init'
 
 module HALPresenter
-
-  module ClassMethods
-    def base_href=(base)
-      @base_href = base&.sub(%r(/*$), '')
-    end
-
-    def href(href)
-      return href if (@base_href ||= '').empty?
-      return href if href =~ %r(\A(\w+://)?[^/])
-      @base_href + href
-    end
-  end
-
   module Links
     include SuperInit
+
+    module ClassMethods
+      def base_href=(base)
+        @base_href = base&.sub(%r(/*$), '')
+      end
+
+      def href(href)
+        return href if (@base_href ||= '').empty?
+        return href if href =~ %r(\A(\w+://)?[^/])
+        @base_href + href
+      end
+    end
 
     class Link < HALPresenter::Property
       attr_reader :type, :deprecation, :profile, :title

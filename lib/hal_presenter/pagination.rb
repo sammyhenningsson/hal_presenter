@@ -1,12 +1,9 @@
 module HALPresenter
-  module ClassMethods
+  class << self
     attr_accessor :paginate
   end
 
   class Pagination
-    def self.included(base)
-      base.extend ClassMethods
-    end
 
     class Uri
       def self.parse(str)
