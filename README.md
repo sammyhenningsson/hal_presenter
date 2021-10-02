@@ -134,7 +134,7 @@ class PostSerializer
   model Post
 end
 ```
-This make it possible to serialize `Post` instances with `HALPresenter.to_hal`. HALPresenter will then lookup the right presenter and delegate the serialization to id 
+This make it possible to serialize `Post` instances with `HALPresenter.to_hal`. HALPresenter will then lookup the right presenter and delegate the serialization to it 
 (which in the case above would be `PostSerializer`).
 ``` ruby
 post = Post.new(*args)
