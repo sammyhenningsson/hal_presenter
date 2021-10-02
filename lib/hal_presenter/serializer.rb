@@ -73,6 +73,7 @@ module HALPresenter
     end
 
     def to_collection_hash(resources, options)
+      resources ||= []
       policy = policy_for(nil, options)
       properties = collection_properties
       attributes = properties.attributes
