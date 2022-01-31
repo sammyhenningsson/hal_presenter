@@ -28,6 +28,7 @@ module HALPresenter
         @deprecation =  kwargs[:deprecation].freeze
         @profile =      kwargs[:profile].freeze
         @title =        kwargs[:title].freeze
+        @templated =    kwargs[:templated].freeze
 
         curie = kwargs[:curie].to_s
         rel = [curie, rel.to_s].join(':') unless curie.empty?
@@ -45,13 +46,16 @@ module HALPresenter
         href = value(resource, options)
         return {} unless href
 
-        {href: HALPresenter.href(href)}.tap do |hash|
-          hash[:type]        = type        if type
-          hash[:deprecation] = deprecation if deprecation
-          hash[:profile]     = profile     if profile
-          hash[:title]       = title       if title
-          hash[:templated]   = templated   if templated
-        end
+        values = href.respond_to?(:to_h) ? href.to_h : {}
+        values[:href] = HALPresenter.href(values[:href] || href)
+
+        {
+          type: type,
+          deprecation: deprecation,
+          profile: profile,
+          title: title,
+          templated: templated
+        }.compact.merge(values)
       end
     end
 
