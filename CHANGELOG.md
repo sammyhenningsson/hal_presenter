@@ -1,3 +1,7 @@
+## 1.7.0
+ * Fix Ruby 3 warnings
+ * Support returning a hash from link blocks
+ * Fix nil problem when no collection
 ## 1.6.0
  * Update certificate and email address
  * Convert dash to underscore in rels
