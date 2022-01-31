@@ -7,12 +7,12 @@ module HALPresenter
     module ClassMethods
       def to_hal(resource, **options)
         options = options.dup
-        presenter!(resource, options).to_hal(resource, options)
+        presenter!(resource, **options).to_hal(resource, **options)
       end
 
       def to_collection(resources, **options)
         options = options.dup
-        presenter!(resources, options).to_collection(resources, options)
+        presenter!(resources, **options).to_collection(resources, **options)
       end
 
       private

@@ -94,7 +94,7 @@ class CollectionTest < ActiveSupport::TestCase
 
   test 'HALPresenter.to_collection with opts' do
     options = { page: 2 }
-    payload = HALPresenter.to_collection(@items, options)
+    payload = HALPresenter.to_collection(@items, **options)
     @expected[:_links][:next] = { href: '/items?page=2' }
     assert_sameish_hash(@expected, JSON.parse(payload))
   end

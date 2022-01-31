@@ -111,7 +111,7 @@ class SerializerTest < ActiveSupport::TestCase
 
   test 'HALPresenter.to_hal' do
     options = { presenter: Presenter }
-    payload = HALPresenter.to_hal(@obj, options)
+    payload = HALPresenter.to_hal(@obj, **options)
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
@@ -186,7 +186,7 @@ class SerializerTest < ActiveSupport::TestCase
 
   test 'Presenter.to_hal with options' do
     options = { edit_uri: 'foo', child_data: 'optional_data' }
-    payload = Presenter.to_hal(@obj, options)
+    payload = Presenter.to_hal(@obj, **options)
     result = JSON.parse(payload, symbolize_names: true)
 
     assert_equal 'foo', result[:_links][:edit][:href]
@@ -438,7 +438,7 @@ class SerializerTest < ActiveSupport::TestCase
       assert_sameish_hash({a: 'A', b: 'B', x: 'A'}, JSON.parse(payload))
     end
 
-    presenter_c.to_hal(nil, {c: true}).tap do |payload|
+    presenter_c.to_hal(nil, c: true).tap do |payload|
       assert_sameish_hash({a: 'AC', b: 'bc', c: 'C', x: 'A', y: 'AB'}, JSON.parse(payload))
     end
   end
@@ -504,7 +504,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    presenter_c.to_hal(nil, {c: true}).tap do |payload|
+    presenter_c.to_hal(nil, c: true).tap do |payload|
       assert_sameish_hash(
         {
           _links: {
@@ -602,7 +602,7 @@ class SerializerTest < ActiveSupport::TestCase
       )
     end
 
-    presenter_c.to_hal(nil, {c: true}).tap do |payload|
+    presenter_c.to_hal(nil, c: true).tap do |payload|
       assert_sameish_hash(
         {
           _links: {

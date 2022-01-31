@@ -27,7 +27,7 @@ class HooksTest < ActiveSupport::TestCase
   end
 
   test 'HooksPresenter.to_hal with post serialize hook' do
-    payload = HooksPresenter.to_hal(@item, @options)
+    payload = HooksPresenter.to_hal(@item, **@options)
     assert_sameish_hash(@expected, JSON.parse(payload))
   end
 
@@ -42,7 +42,7 @@ class HooksTest < ActiveSupport::TestCase
       end
     end
 
-    presenter_a.to_hal(@item, @options).tap do |payload|
+    presenter_a.to_hal(@item, **@options).tap do |payload|
       @expected[:a] = 'A'
       assert_sameish_hash(
         @expected,
@@ -50,7 +50,7 @@ class HooksTest < ActiveSupport::TestCase
       )
     end
 
-    presenter_b.to_hal(@item, @options).tap do |payload|
+    presenter_b.to_hal(@item, **@options).tap do |payload|
       assert_sameish_hash(
         {
           title: 'hooks',
